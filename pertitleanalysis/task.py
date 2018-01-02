@@ -1,8 +1,8 @@
 # -*- coding: utf8 -*-
 
-import subprocess
-import json
 import os
+import json
+import subprocess
 import uuid
 
 class Task:

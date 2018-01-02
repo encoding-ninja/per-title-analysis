@@ -4,10 +4,10 @@ import os
 import json
 import datetime
 
-from config import EncodingProfile, EncodingLadder
-from task import Probe, CrfEncode
+from .config import EncodingProfile, EncodingLadder
+from .task import Probe, CrfEncode
 
-class PerTitleAnalysis:
+class Provider:
     """This class defines a per title analysis.
 
     :param input_file_path: The input video file path
@@ -34,6 +34,7 @@ class PerTitleAnalysis:
         return string
 
     def get_json(self):
+        """Return object details in json"""
         return json.dumps(self.json)
 
     def process(self, method):

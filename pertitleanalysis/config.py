@@ -57,6 +57,7 @@ class EncodingProfile:
         self.bitrate_factor = ladder_max_bitrate/self.bitrate_default
 
     def get_json(self):
+        """Return object details in json"""
         profile = {}
         profile['width'] = self.width
         profile['height'] = self.height
@@ -108,6 +109,7 @@ class EncodingLadder:
             encoding_profile.set_bitrate_factor(ladder_max_bitrate)
 
     def get_json(self):
+        """Return object details in json"""
         ladder = {}
         ladder['overall_bitrate_ladder'] = self.get_overall_bitrate()
         ladder['encoding_profiles'] = []
