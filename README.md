@@ -12,7 +12,7 @@ Example:
 
 from pertitleanalysis import per_title_analysis as pta
 
-# create your static encoding ladder
+# create your template encoding ladder
 PROFILE_LIST = []
 PROFILE_LIST.append(pta.EncodingProfile(1920, 1080, 4500000, 2000000, 6000000, True))
 PROFILE_LIST.append(pta.EncodingProfile(1280, 720, 3400000, 1300000, 4500000, True))
@@ -26,8 +26,8 @@ LADDER = pta.EncodingLadder(PROFILE_LIST)
 ANALYSIS = pta.Analyzer("{{ your_input_file_path }}", LADDER)
 
 # Launch various analysis
-ANALYSIS.process(1, 7, 2)
-ANALYSIS.process(10, 7, 2)
+ANALYSIS.process(1, 7, 2) # 1 Segment, CRF 7, IDR 2s
+ANALYSIS.process(10, 7, 2) # 1O Segments, CRF 7, IDR 2s
 
 # Print results
 print(ANALYSIS.get_json())
