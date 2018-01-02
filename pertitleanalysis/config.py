@@ -81,6 +81,13 @@ class EncodingLadder:
                 ladder_max_bitrate = encoding_profile.bitrate_default
         return ladder_max_bitrate
 
+    def get_overall_bitrate(self):
+        """Get the overall bitrate for the ladder"""
+        ladder_overall_bitrate = 0
+        for encoding_profile in self.encoding_profile_list:
+            ladder_overall_bitrate += encoding_profile.bitrate_default
+        return ladder_overall_bitrate
+
     def calculate_bitrate_factors(self):
         """Calculate the bitrate factor for each profile"""
         ladder_max_bitrate = self.get_max_bitrate()

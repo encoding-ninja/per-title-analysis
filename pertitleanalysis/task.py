@@ -87,7 +87,9 @@ class CrfEncode(Task):
         """Using FFmpeg to CRF encode"""
         command = ['ffmpeg',
                 '-hide_banner', '-loglevel', 'quiet', '-nostats',
+                '-ss', str(self.part_start_time),
                 '-i', self.input_file_path,
+                '-t', str(self.part_duration),
                 '-preset', 'ultrafast', 
                 '-an', '-deinterlace',
                 '-crf', str(self.crf_value),
