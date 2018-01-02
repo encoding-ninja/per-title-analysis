@@ -102,3 +102,4 @@ ENV/
 
 # dev files
 dev.py
+.vscode/settings.json

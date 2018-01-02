@@ -4,6 +4,7 @@ from __future__ import division
 import os
 import json
 import datetime
+import statistics
 
 from .task_providers import Probe, CrfEncode
 
@@ -29,12 +30,12 @@ class EncodingProfile(object):
         """
 
         if width is None:
-            raise ValueError
+            raise ValueError('The EncodingProfile.width value is required')
         else:
             self.width = int(width)
     
         if height is None:
-            raise ValueError
+            raise ValueError('The EncodingProfile.height value is required')
         else:
             self.height = int(height)
 
@@ -62,15 +63,15 @@ class EncodingProfile(object):
     
     def __str__(self):
         """Display the encoding profile informations
-        
+
         :return: human readable string describing an encoding profil object
         :rtype: str
         """
         return "{}x{}, bitrate_default={}, bitrate_min={}, bitrate_max={}, bitrate_factor={}, required={}".format(self.width, self.height, self.bitrate_default, self.bitrate_min, self.bitrate_max, self.bitrate_factor, self.required)
-    
+
     def get_json(self):
         """Return object details in json
-        
+
         :return: json object describing the encoding profile and the configured constraints
         :rtype: str
         """
@@ -95,7 +96,7 @@ class EncodingLadder(object):
 
     def __init__(self, encoding_profile_list):
         """EncodingLadder initialization
-        
+
         :param encoding_profile_list: A list of multiple encoding profiles
         :type encoding_profile_list: per_title.EncodingProfile[]
         """
@@ -104,7 +105,7 @@ class EncodingLadder(object):
 
     def __str__(self):
         """Display the encoding ladder informations
-        
+
         :return: human readable string describing the encoding ladder template
         :rtype: str
         """
@@ -169,6 +170,10 @@ class Analyzer(object):
         """
         self.input_file_path = input_file_path
         self.encoding_ladder = encoding_ladder
+        
+        self.average_bitrate = None
+        self.standard_deviation = None
+        self.optimal_bitrate = None
 
         # init json result
         self.json = {}
@@ -207,7 +212,7 @@ class Analyzer(object):
         input_probe = Probe(self.input_file_path)
         input_probe.execute()
 
-        optimal_bitrate_list = []
+        crf_bitrate_list = []
         part_duration = input_probe.duration/number_of_parts
         idr_interval_frames =  idr_interval*input_probe.framerate
 
@@ -225,11 +230,40 @@ class Analyzer(object):
             # Remove temporary CRF encoded file
             os.remove(crf_encode.output_file_path)
 
-            # Set the optimal bitrate
-            optimal_bitrate_list.append(crf_probe.bitrate)
+            # Set the crf bitrate
+            crf_bitrate_list.append(crf_probe.bitrate)
             
-        # Set the optimal bitrate from the average of all crf encoded parts
-        self.optimal_bitrate = sum(optimal_bitrate_list)/len(optimal_bitrate_list)
+        # Calculate the average bitrate for all CRF encodings
+        self.average_bitrate = statistics.mean(crf_bitrate_list)
+
+        if number_of_parts > 1:
+            # Calculate the the standard deviation of crf bitrate values
+            self.standard_deviation = statistics.stdev(crf_bitrate_list)
+
+            weight = 1
+            weighted_bitrate_sum = 0
+            weighted_bitrate_len = 0
+
+            for bitrate in crf_bitrate_list:
+                if bitrate > (self.average_bitrate + 2*self.standard_deviation):
+                    weight = 3
+                elif bitrate > (self.average_bitrate + self.standard_deviation):
+                    weight = 2
+                elif bitrate < (self.average_bitrate - self.standard_deviation):
+                    weight = 0.5
+                elif bitrate < (self.average_bitrate - 2*self.standard_deviation):
+                    weight = 0.25
+                else:
+                    weight = 1
+
+                weighted_bitrate_sum += weight*bitrate
+                weighted_bitrate_len += weight
+
+            self.optimal_bitrate = weighted_bitrate_sum/weighted_bitrate_len
+
+        else:
+            # Set the optimal bitrate from the average of all crf encoded parts
+            self.optimal_bitrate = self.average_bitrate
 
         # Adding results to json
         result = {}
@@ -240,6 +274,8 @@ class Analyzer(object):
         result['parameters']['number_of_parts'] = number_of_parts
         result['parameters']['part_duration'] = part_duration
         result['optimal_bitrate'] = self.optimal_bitrate
+        result['average_bitrate'] = self.average_bitrate
+        result['standard_deviation'] = self.standard_deviation
         result['encoding_ladder'] = {}
         result['encoding_ladder']['encoding_profiles'] = []
 

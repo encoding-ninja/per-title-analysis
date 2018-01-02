@@ -19,17 +19,21 @@ class Task(object):
         else:
             raise ValueError('Cannot access the file: {}'.format(input_file_path))
 
+        self.subprocess_pid = None
+        self.subprocess_out = None
+        self.subprocess_err = None
+
     def execute(self, command):
         """Launch a subprocess task
 
         :param command: Arguments array for the subprocess task
         :type command: str[]
         """
-        p = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        self.subprocess_pid = p.pid
+        proc = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        self.subprocess_pid = proc.pid
 
         try:
-            self.subprocess_out, self.subprocess_err = p.communicate()
+            self.subprocess_out, self.subprocess_err = proc.communicate()
         except:
             print(self.subprocess_err)
             # TODO: error management
@@ -45,6 +49,13 @@ class Probe(Task):
         :type input_file_path: str
         """
         Task.__init__(self, input_file_path)
+
+        self.width = None
+        self.height = None
+        self.bitrate = None
+        self.duration = None
+        self.video_codec = None
+        self.framerate = None
 
     def execute(self):
         """Using FFprobe to get input video file informations"""
@@ -98,7 +109,7 @@ class CrfEncode(Task):
         # Generate a temporary file name for the task output
         self.output_file_path = os.path.join(os.path.dirname(self.input_file_path), 
                                              os.path.splitext(os.path.basename(self.input_file_path))[0] + "_"+uuid.uuid4().hex+".mp4")
-
+ 
     def execute(self):
         """Using FFmpeg to CRF Encode a file or part of a file"""
         command = ['ffmpeg',
