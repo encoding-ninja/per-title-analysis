@@ -1,5 +1,10 @@
-# per-title-analysis
-Analysis provider for adapting your OTT bitrate ladder
+# Per-Title Analysis
+This a python package providing tools for optimizing your over-the-top bitrate ladder per each video you need to encode.
+
+Documentation will improve over time!
+
+Dependencies:
+You need to have ffmpeg and ffprobe installed on the host which is running the script.
 
 Example:
 ```
@@ -20,10 +25,10 @@ ladder = config.EncodingLadder(profile_list)
 analysis = pertitleanalysis.Provider(" {{ your_input_file_path }} ", ladder)
 
 # Launch a singlepart analysis
-analysis.process('singlepart')
+analysis.process(1)
 
 # Launch a multipart analysis
-analysis.process('multipart')
+analysis.process(10)
 
 # Print results
 print(analysis.get_json())

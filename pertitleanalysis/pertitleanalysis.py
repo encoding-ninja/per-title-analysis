@@ -20,7 +20,6 @@ class Provider:
         self.encoding_ladder = encoding_ladder
         self.crf_value = 7 # TO DO: make crf_value as an input parameter
         self.idr_interval = 2 # in secondes - TO DO: make idr_interval as an input parameter
-        self.number_of_parts = 3 # TO DO: make number_of_parts a parameter
 
         # init json result
         self.json = {}
@@ -37,18 +36,23 @@ class Provider:
         """Return object details in json"""
         return json.dumps(self.json)
 
-    def process(self, method):
+    def process(self, number_of_parts):
         """Do the necessary crf encodings and assessments
 
-        :param method: Can be 'singlepart' or 'multipart'
+        :param number_of_parts: Number of part/segment for the analysis
         """
         # Start by probing the input video file
         input_probe = Probe(self.input_file_path)
         input_probe.execute()
 
-        if method is "singlepart":
+        optimal_bitrate_list = []
+        part_duration = input_probe.duration/number_of_parts
+
+        for i in range(0,number_of_parts):
+            part_start_time = i * part_duration
+
             # Do a CRF encode for the input file
-            crf_encode = CrfEncode(self.input_file_path, self.crf_value, self.idr_interval, 0, input_probe.duration)
+            crf_encode = CrfEncode(self.input_file_path, self.crf_value, self.idr_interval, part_start_time, part_duration)
             crf_encode.execute()
 
             # Get the Bitrate from the CRF encoded file
@@ -59,44 +63,18 @@ class Provider:
             os.remove(crf_encode.output_file_path)
 
             # Set the optimal bitrate
-            self.optimal_bitrate = crf_probe.bitrate
-        
-        elif method is "multipart":
-            optimal_bitrate_list = []
-
-            part_duration = input_probe.duration/self.number_of_parts
-
-            for i in range(0,self.number_of_parts):
-                part_start_time = i * part_duration
-
-                # Do a CRF encode for the input file
-                crf_encode = CrfEncode(self.input_file_path, self.crf_value, self.idr_interval, part_start_time, part_duration)
-                crf_encode.execute()
-
-                # Get the Bitrate from the CRF encoded file
-                crf_probe = Probe(crf_encode.output_file_path)
-                crf_probe.execute()
-
-                # Remove temporary CRF encoded file
-                os.remove(crf_encode.output_file_path)
-
-                # Set the optimal bitrate
-                optimal_bitrate_list.append(crf_probe.bitrate)
+            optimal_bitrate_list.append(crf_probe.bitrate)
             
-            # Set the optimal bitrate from the average of all crf encoded parts
-            self.optimal_bitrate = sum(optimal_bitrate_list)/len(optimal_bitrate_list)
+        # Set the optimal bitrate from the average of all crf encoded parts
+        self.optimal_bitrate = sum(optimal_bitrate_list)/len(optimal_bitrate_list)
 
         # Adding results to json
         result = {}
-        result ['processing_date'] = str(datetime.datetime.now())
+        result['processing_date'] = str(datetime.datetime.now())
         result['parameters'] = {}
-        result['parameters']['method'] = method
         result['parameters']['crf_value'] = self.crf_value
         result['parameters']['idr_interval'] = self.idr_interval
-        if method is "singlepart":
-            result['parameters']['number_of_parts'] = 1
-        else:
-            result['parameters']['number_of_parts'] = self.number_of_parts
+        result['parameters']['number_of_parts'] = number_of_parts
         result['optimal_bitrate'] = self.optimal_bitrate
         result['encoding_ladder'] = {}
         result['encoding_ladder']['encoding_profiles'] = []
