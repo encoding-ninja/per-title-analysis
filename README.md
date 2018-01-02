@@ -25,9 +25,10 @@ ladder = pta.EncodingLadder(profile_list)
 # Create a new analysis provider 
 analysis = pta.Analyzer("{{ your_input_file_path }}", ladder)
 
-# Launch analysis
+# Launch various analysis
 analysis.process(1, 3, 2)
-#analysis.process(10, 7, 2)
+analysis.process(1, 7, 2)
+analysis.process(10, 7, 2)
 
 # Print results
 print(analysis.get_json()) 
