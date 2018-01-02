@@ -67,7 +67,7 @@ class EncodingProfile(object):
         """
         return "{}x{}, bitrate_default={}, bitrate_min={}, bitrate_max={}, bitrate_factor={}, required={}".format(self.width, self.height, self.bitrate_default, self.bitrate_min, self.bitrate_max, self.bitrate_factor, self.required)
     
-    def __json__(self):
+    def get_json(self):
         """Return object details in json
         
         :return: json object describing the encoding profile and the configured constraints
@@ -111,7 +111,7 @@ class EncodingLadder(object):
             string += str(encoding_profile) + "\n"
         return string
     
-    def __json__(self):
+    def get_json(self):
         """Return object details in json
         
         :return: json object describing the encoding ladder template
@@ -121,7 +121,7 @@ class EncodingLadder(object):
         ladder['overall_bitrate_ladder'] = self.get_overall_bitrate()
         ladder['encoding_profiles'] = []
         for encoding_profile in self.encoding_profile_list:
-            ladder['encoding_profiles'].append(json.loads(encoding_profile.__json__()))
+            ladder['encoding_profiles'].append(json.loads(encoding_profile.get_json()))
         return json.dumps(ladder)
 
     def get_max_bitrate(self):
@@ -170,7 +170,7 @@ class Analyzer(object):
 
         # init json result
         self.json = {}
-        self.json['encoding_ladder'] = json.loads(self.encoding_ladder.__json__())
+        self.json['encoding_ladder'] = json.loads(self.encoding_ladder.get_json())
         self.json['analyses'] = []
 
     def __str__(self):
@@ -183,13 +183,13 @@ class Analyzer(object):
         string += str(self.encoding_ladder)
         return string
 
-    def __json__(self):
+    def get_json(self):
         """Return object details in json
 
         :return: json object describing all inputs configuration and output analyses
         :rtype: str
         """
-        return json.dumps(self.json)
+        return json.dumps(self.json, indent=4, sort_keys=True)
 
     def process(self, number_of_parts, crf_value, idr_interval):
         """Do the necessary crf encodings and assessments
