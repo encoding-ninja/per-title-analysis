@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 
+from __future__ import division
 import os
 import json
 import datetime
@@ -80,6 +81,7 @@ class EncodingProfile(object):
         profile['constraints'] = {}
         profile['constraints']['bitrate_min'] = self.bitrate_min
         profile['constraints']['bitrate_max'] = self.bitrate_max
+        profile['constraints']['bitrate_factor'] = self.bitrate_factor
         profile['constraints']['required'] = self.required
         return json.dumps(profile)
 
