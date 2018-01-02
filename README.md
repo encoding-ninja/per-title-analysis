@@ -31,5 +31,5 @@ analysis.process(1, 7, 2)
 analysis.process(10, 7, 2)
 
 # Print results
-print(analysis.get_json()) 
+print(analysis.__json__()) 
 ```
