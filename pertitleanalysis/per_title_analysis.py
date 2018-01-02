@@ -177,6 +177,7 @@ class Analyzer(object):
 
         # init json result
         self.json = {}
+        self.json['input_file_path'] = self.input_file_path
         self.json['encoding_ladder'] = json.loads(self.encoding_ladder.get_json())
         self.json['analyses'] = []
 
