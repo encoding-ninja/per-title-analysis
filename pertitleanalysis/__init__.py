@@ -10,5 +10,3 @@
 __title__ = 'pertitleanalysis'
 __author__ = 'Antoine Henning'
 __version__ = '0.1-dev'
-
-import json
