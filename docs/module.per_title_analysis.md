@@ -1,10 +1,10 @@
-Help on module pertitleanalysis.per_title in pertitleanalysis:
+Help on module pertitleanalysis.per_title_analysis in pertitleanalysis:
 
 NAME
-    pertitleanalysis.per_title - # -*- coding: utf8 -*-
+    pertitleanalysis.per_title_analysis - # -*- coding: utf8 -*-
 
 FILE
-    /Users/antoine/Github/per-title-analysis/pertitleanalysis/per_title.py
+    /Users/antoine/Github/per-title-analysis/pertitleanalysis/per_title_analysis.py
 
 CLASSES
     __builtin__.object

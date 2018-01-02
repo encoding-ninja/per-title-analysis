@@ -2,7 +2,7 @@
 """
     pertitleanalysis
     -----
-    A smart and simple per title video analysis tools for optimizing your over-the-top encoding ladder
+    A smart and simple Per-Title video analysis tool for optimizing your over-the-top encoding ladder
     :copyright: (c) 2017 by Antoine Henning.
     :license: MIT, see LICENSE for more details.
 """
