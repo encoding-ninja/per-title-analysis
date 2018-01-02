@@ -13,23 +13,22 @@ Example:
 from pertitleanalysis import per_title_analysis as pta
 
 # create your static encoding ladder
-profile_list = []
-profile_list.append(pta.EncodingProfile(1920, 1080, 4500000, 2000000, 6000000, True))
-profile_list.append(pta.EncodingProfile(1280, 720, 3400000, 1300000, 4500000, True))
-profile_list.append(pta.EncodingProfile(960, 540, 2100000, 700000, 300000, True))
-profile_list.append(pta.EncodingProfile(640, 360, 1100000, 300000, 2000000, True))
-profile_list.append(pta.EncodingProfile(480, 270, 750000, 300000, 900000, False))
-profile_list.append(pta.EncodingProfile(480, 270, 300000, 150000, 500000, True))
-ladder = pta.EncodingLadder(profile_list)
+PROFILE_LIST = []
+PROFILE_LIST.append(pta.EncodingProfile(1920, 1080, 4500000, 2000000, 6000000, True))
+PROFILE_LIST.append(pta.EncodingProfile(1280, 720, 3400000, 1300000, 4500000, True))
+PROFILE_LIST.append(pta.EncodingProfile(960, 540, 2100000, 700000, 300000, True))
+PROFILE_LIST.append(pta.EncodingProfile(640, 360, 1100000, 300000, 2000000, True))
+PROFILE_LIST.append(pta.EncodingProfile(480, 270, 750000, 300000, 900000, False))
+PROFILE_LIST.append(pta.EncodingProfile(480, 270, 300000, 150000, 500000, True))
+LADDER = pta.EncodingLadder(PROFILE_LIST)
 
 # Create a new analysis provider 
-analysis = pta.Analyzer("{{ your_input_file_path }}", ladder)
+ANALYSIS = pta.Analyzer("{{ your_input_file_path }}", LADDER)
 
 # Launch various analysis
-analysis.process(1, 3, 2)
-analysis.process(1, 7, 2)
-analysis.process(10, 7, 2)
+ANALYSIS.process(1, 7, 2)
+ANALYSIS.process(10, 7, 2)
 
 # Print results
-print(analysis.get_json()) 
+print(ANALYSIS.get_json())
 ```
