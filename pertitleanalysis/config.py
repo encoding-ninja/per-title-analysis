@@ -1,5 +1,7 @@
 # -*- coding: utf8 -*-
 
+import json
+
 class EncodingProfile:
     """This class defines an encoding profile.
 
@@ -45,7 +47,7 @@ class EncodingProfile:
             self.required = True
 
         self.bitrate_factor = None
-    
+
     def __str__(self):
         """Display the encoding profile informations"""
         return "{}x{}, bitrate_default={}, bitrate_min={}, bitrate_max={}, bitrate_factor={}, required={}".format(self.width, self.height, self.bitrate_default, self.bitrate_min, self.bitrate_max, self.bitrate_factor, self.required)
@@ -53,6 +55,17 @@ class EncodingProfile:
     def set_bitrate_factor(self, ladder_max_bitrate):
         """Set the bitrate factor from the max bitrate in the encoding ladder"""
         self.bitrate_factor = ladder_max_bitrate/self.bitrate_default
+
+    def get_json(self):
+        profile = {}
+        profile['width'] = self.width
+        profile['height'] = self.height
+        profile['bitrate'] = self.bitrate_default
+        profile['constraints'] = {}
+        profile['constraints']['bitrate_min'] = self.bitrate_min
+        profile['constraints']['bitrate_max'] = self.bitrate_max
+        profile['constraints']['required'] = self.required
+        return json.dumps(profile)
 
 
 class EncodingLadder:
@@ -93,4 +106,13 @@ class EncodingLadder:
         ladder_max_bitrate = self.get_max_bitrate()
         for encoding_profile in self.encoding_profile_list:
             encoding_profile.set_bitrate_factor(ladder_max_bitrate)
+
+    def get_json(self):
+        ladder = {}
+        ladder['overall_bitrate_ladder'] = self.get_overall_bitrate()
+        ladder['encoding_profiles'] = []
+        for encoding_profile in self.encoding_profile_list:
+            ladder['encoding_profiles'].append(json.loads(encoding_profile.get_json()))
+        return json.dumps(ladder)
+    
 

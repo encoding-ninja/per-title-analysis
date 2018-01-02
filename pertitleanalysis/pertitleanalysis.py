@@ -2,6 +2,7 @@
 
 import os 
 import json
+import datetime
 
 from config import EncodingProfile, EncodingLadder
 from task import Probe, CrfEncode
@@ -23,23 +24,16 @@ class PerTitleAnalysis:
 
         # init json result
         self.json = {}
-        self.json['config'] = {}
-        self.json['config']['overall_bitrate_ladder'] = self.encoding_ladder.get_overall_bitrate()
-        self.json['config']['encoding_ladder'] = []
-        for encoding_profile in self.encoding_ladder.encoding_profile_list:
-            profile = {}
-            profile['width'] = encoding_profile.width
-            profile['height'] = encoding_profile.height
-            profile['bitrate'] = encoding_profile.bitrate_default
-            profile['constraints'] = {}
-            profile['constraints']['bitrate_min'] = encoding_profile.bitrate_min
-            profile['constraints']['bitrate_max'] = encoding_profile.bitrate_max
-            profile['constraints']['required'] = encoding_profile.required
-            self.json['config']['encoding_ladder'].append(profile)
-        self.json['analysis'] = []
+        self.json['encoding_ladder'] = json.loads(self.encoding_ladder.get_json())
+        self.json['analyses'] = []
 
     def __str__(self):
         """Display the per title analysis informations"""
+        string = "Per-Title Analysis for: {}\n".format(self.input_file_path)
+        string += str(self.encoding_ladder)
+        return string
+
+    def get_json(self):
         return json.dumps(self.json)
 
     def process(self, method):
@@ -52,7 +46,6 @@ class PerTitleAnalysis:
         input_probe.execute()
 
         if method is "singlepart":
-            self.number_of_parts = 1
             # Do a CRF encode for the input file
             crf_encode = CrfEncode(self.input_file_path, self.crf_value, self.idr_interval, 0, input_probe.duration)
             crf_encode.execute()
@@ -92,15 +85,20 @@ class PerTitleAnalysis:
             # Set the optimal bitrate from the average of all crf encoded parts
             self.optimal_bitrate = sum(optimal_bitrate_list)/len(optimal_bitrate_list)
 
-        # Common result formatting
+        # Adding results to json
         result = {}
+        result ['processing_date'] = str(datetime.datetime.now())
         result['parameters'] = {}
         result['parameters']['method'] = method
         result['parameters']['crf_value'] = self.crf_value
         result['parameters']['idr_interval'] = self.idr_interval
-        result['parameters']['number_of_parts'] = self.number_of_parts
+        if method is "singlepart":
+            result['parameters']['number_of_parts'] = 1
+        else:
+            result['parameters']['number_of_parts'] = self.number_of_parts
         result['optimal_bitrate'] = self.optimal_bitrate
-        result['profiles'] = []
+        result['encoding_ladder'] = {}
+        result['encoding_ladder']['encoding_profiles'] = []
 
         overall_bitrate_optimal = 0
         for encoding_profile in self.encoding_ladder.encoding_profile_list:
@@ -123,9 +121,9 @@ class PerTitleAnalysis:
                 profile['width'] = encoding_profile.width
                 profile['height'] = encoding_profile.height
                 profile['bitrate'] = target_bitrate
-                profile['bitrate'] = target_bitrate
-                result['profiles'].append(profile)
+                profile['bitrate_savings'] = encoding_profile.bitrate_default - target_bitrate
+                result['encoding_ladder']['encoding_profiles'].append(profile)
             
-        result['overall_bitrate_optimal'] = overall_bitrate_optimal
-        result['overall_bitrate_savings'] = self.encoding_ladder.get_overall_bitrate() - overall_bitrate_optimal
-        self.json['analysis'].append(result)
+        result['encoding_ladder']['overall_bitrate_ladder'] = overall_bitrate_optimal
+        result['encoding_ladder']['overall_bitrate_savings'] = self.encoding_ladder.get_overall_bitrate() - overall_bitrate_optimal
+        self.json['analyses'].append(result)
