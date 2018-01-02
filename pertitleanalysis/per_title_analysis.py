@@ -238,6 +238,7 @@ class Analyzer(object):
         result['parameters']['crf_value'] = crf_value
         result['parameters']['idr_interval'] = idr_interval
         result['parameters']['number_of_parts'] = number_of_parts
+        result['parameters']['part_duration'] = part_duration
         result['optimal_bitrate'] = self.optimal_bitrate
         result['encoding_ladder'] = {}
         result['encoding_ladder']['encoding_profiles'] = []

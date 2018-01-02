@@ -111,5 +111,6 @@ class CrfEncode(Task):
                 '-crf', str(self.crf_value),
                 '-pix_fmt', 'yuv420p',
                 '-s', '384x216',
+                '-x264opts', 'keyint=' + str(self.idr_interval),
                 '-y', self.output_file_path]
         Task.execute(self, command)
