@@ -250,14 +250,14 @@ class Analyzer(object):
             weighted_bitrate_len = 0
 
             for bitrate in crf_bitrate_list:
-                if bitrate > (self.average_bitrate + 2*self.standard_deviation):
-                    weight = 3
-                elif bitrate > (self.average_bitrate + self.standard_deviation):
+                if bitrate > (self.average_bitrate + self.standard_deviation):
+                    weight = 4
+                elif bitrate > (self.average_bitrate + self.standard_deviation/2):
                     weight = 2
-                elif bitrate < (self.average_bitrate - self.standard_deviation):
+                elif bitrate < (self.average_bitrate - self.standard_deviation/2):
                     weight = 0.5
-                elif bitrate < (self.average_bitrate - 2*self.standard_deviation):
-                    weight = 0.25
+                elif bitrate < (self.average_bitrate - self.standard_deviation):
+                    weight = 0
                 else:
                     weight = 1
 
