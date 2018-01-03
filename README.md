@@ -26,8 +26,8 @@ LADDER = pta.EncodingLadder(PROFILE_LIST)
 ANALYSIS = pta.Analyzer("{{ your_input_file_path }}", LADDER)
 
 # Launch various analysis
-ANALYSIS.process(1, 7, 2) # 1 Segment, CRF 7, IDR 2s
-ANALYSIS.process(10, 7, 2) # 1O Segments, CRF 7, IDR 2s
+ANALYSIS.process(1, 1920, 1080, 24, 2)
+ANALYSIS.process(1, 384, 216, 7, 2) 
 
 # Print results
 print(ANALYSIS.get_json())

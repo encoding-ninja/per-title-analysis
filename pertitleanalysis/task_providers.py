@@ -85,11 +85,15 @@ class Probe(Task):
 class CrfEncode(Task):
     """This class defines a CRF encoding task"""
 
-    def __init__(self, input_file_path, crf_value, idr_interval, part_start_time, part_duration):
+    def __init__(self, input_file_path, width, height, crf_value, idr_interval, part_start_time, part_duration):
         """CrfEncode initialization
         
         :param input_file_path: The input video file path
         :type input_file_path: str
+        :param width: Width of the CRF encode
+        :type width: int
+        :param height: Height of the CRF encode
+        :type height: int
         :param crf_value: The CRF Encoding value for ffmpeg
         :type crf_value: int
         :param idr_interval: IDR Interval in frames ('None' value is no fix IDR interval needed)
@@ -101,6 +105,7 @@ class CrfEncode(Task):
         """
         Task.__init__(self, input_file_path)
 
+        self.definition = str(width)+'x'+str(height)
         self.crf_value = crf_value
         self.idr_interval = idr_interval
         self.part_start_time = part_start_time
@@ -121,7 +126,7 @@ class CrfEncode(Task):
                 '-an', '-deinterlace',
                 '-crf', str(self.crf_value),
                 '-pix_fmt', 'yuv420p',
-                '-s', '384x216',
+                '-s', self.definition,
                 '-x264opts', 'keyint=' + str(self.idr_interval),
                 '-y', self.output_file_path]
         Task.execute(self, command)

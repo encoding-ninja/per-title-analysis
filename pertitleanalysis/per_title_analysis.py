@@ -199,11 +199,15 @@ class Analyzer(object):
         """
         return json.dumps(self.json, indent=4, sort_keys=True)
 
-    def process(self, number_of_parts, crf_value, idr_interval):
+    def process(self, number_of_parts, width, height, crf_value, idr_interval):
         """Do the necessary crf encodings and assessments
 
         :param number_of_parts: Number of part/segment for the analysis
         :type number_of_parts: int
+        :param width: Width of the CRF encode
+        :type width: int
+        :param height: Height of the CRF encode
+        :type height: int
         :param crf_value: Constant Rate Factor: this is a constant quality factor, see ffmpeg.org for more documentation on this parameter
         :type crf_value: int
         :param idr_interval: IDR interval in seconds
@@ -221,7 +225,7 @@ class Analyzer(object):
             part_start_time = i*part_duration
 
             # Do a CRF encode for the input file
-            crf_encode = CrfEncode(self.input_file_path, crf_value, idr_interval_frames, part_start_time, part_duration)
+            crf_encode = CrfEncode(self.input_file_path, width, height, crf_value, idr_interval_frames, part_start_time, part_duration)
             crf_encode.execute()
 
             # Get the Bitrate from the CRF encoded file
@@ -270,6 +274,8 @@ class Analyzer(object):
         result = {}
         result['processing_date'] = str(datetime.datetime.now())
         result['parameters'] = {}
+        result['parameters']['width'] = width
+        result['parameters']['height'] = height
         result['parameters']['crf_value'] = crf_value
         result['parameters']['idr_interval'] = idr_interval
         result['parameters']['number_of_parts'] = number_of_parts
