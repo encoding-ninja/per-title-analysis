@@ -9,8 +9,30 @@ You also have the control over analysis parameters (based on CRF Encoding).
 The analyzer calculates an optimal bitrate for the higher profile.
 Other profiles are declined top to bottom from the initial gap between each profiles of the template ladder.
 
+### The template encoding ladder
+It is composed of multiple encoding profile object.
+Each encoding profile is defined by those attributes:
+- __width__ (int): Video definition width
+- __height__ (int): Video definition height
+- __bitrate_default__ (int): This should be the bitrate of your static encoding ladder
+- __bitrate_min__ (int): This is the minimal bitrate you set for this profile in the output optimized encoding ladder
+- __bitrate_max__ (int): This is the maximal bitrate you set for this profile in the output optimized encoding ladder
+- __required__ (bool): Indicates if you authorize the script to remove this profile if considered not useful after optimization (conditions for this to happen are explained after)
+- __bitrate_factor__ (float): this is a private attribute calculated after initialization of the template encoding ladder 
+
+##### See this template example
+| width | height | bitrate_default | bitrate_min | bitrate_max | required |
+| --- | --- | --- | --- | --- | --- |
+| *in pixels* | *in pixels* | *in bits per second* | *in bits per second* | *in bits per second* | *bool* |
+| 1920 | 1080 | 4500000 | 2000000 | 6000000 | True |
+| 1280 | 720 | 3400000 | 1300000 | 4500000 | True |
+| 960 | 540 | 2100000 | 700000 | 3000000 | True |
+| 640 | 360 | 1100000 | 300000 | 2000000 | True |
+| 480 | 270 | 750000 | 300000 | 900000 | False |
+| 480 | 270 | 300000 | 150000 | 500000 | True |
+##### What does it imply? *(soon)*
+
 #### In depth: *(soon)*
-- Explaining the ladder template, and what is a *required* profile
 - How to choose the analysis parameters
 - What is the multiple part analysis
 - How is the weighted average bitrate calculated
