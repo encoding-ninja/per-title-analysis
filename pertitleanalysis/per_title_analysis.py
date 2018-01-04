@@ -178,7 +178,7 @@ class Analyzer(object):
         # init json result
         self.json = {}
         self.json['input_file_path'] = self.input_file_path
-        self.json['encoding_ladder'] = json.loads(self.encoding_ladder.get_json())
+        self.json['template_encoding_ladder'] = json.loads(self.encoding_ladder.get_json())
         self.json['analyses'] = []
 
     def __str__(self):
@@ -283,8 +283,8 @@ class Analyzer(object):
         result['optimal_bitrate'] = self.optimal_bitrate
         result['average_bitrate'] = self.average_bitrate
         result['standard_deviation'] = self.standard_deviation
-        result['encoding_ladder'] = {}
-        result['encoding_ladder']['encoding_profiles'] = []
+        result['optimized_encoding_ladder'] = {}
+        result['optimized_encoding_ladder']['encoding_profiles'] = []
 
         overall_bitrate_optimal = 0
         for encoding_profile in self.encoding_ladder.encoding_profile_list:
@@ -308,8 +308,8 @@ class Analyzer(object):
                 profile['height'] = encoding_profile.height
                 profile['bitrate'] = target_bitrate
                 profile['bitrate_savings'] = encoding_profile.bitrate_default - target_bitrate
-                result['encoding_ladder']['encoding_profiles'].append(profile)
+                result['optimized_encoding_ladder']['encoding_profiles'].append(profile)
             
-        result['encoding_ladder']['overall_bitrate_ladder'] = overall_bitrate_optimal
-        result['encoding_ladder']['overall_bitrate_savings'] = self.encoding_ladder.get_overall_bitrate() - overall_bitrate_optimal
+        result['optimized_encoding_ladder']['overall_bitrate_ladder'] = overall_bitrate_optimal
+        result['optimized_encoding_ladder']['overall_bitrate_savings'] = self.encoding_ladder.get_overall_bitrate() - overall_bitrate_optimal
         self.json['analyses'].append(result)

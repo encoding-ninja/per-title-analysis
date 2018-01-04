@@ -59,7 +59,7 @@ print(ANALYSIS.get_json())
     "analyses": [
         {
             "average_bitrate": 3869192,
-            "encoding_ladder": {
+            "optimized_encoding_ladder": {
                 "encoding_profiles": [
                     {
                         "bitrate": 3869192,
@@ -115,7 +115,7 @@ print(ANALYSIS.get_json())
         },
         {
             "average_bitrate": 2653970,
-            "encoding_ladder": {
+            "optimized_encoding_ladder": {
                 "encoding_profiles": [
                     {
                         "bitrate": 2653970,
@@ -171,7 +171,7 @@ print(ANALYSIS.get_json())
         },
         {
             "average_bitrate": 3844318.1,
-            "encoding_ladder": {
+            "optimized_encoding_ladder": {
                 "encoding_profiles": [
                     {
                         "bitrate": 4747733,
@@ -226,7 +226,7 @@ print(ANALYSIS.get_json())
             "standard_deviation": 1372795.7042960383
         }
     ],
-    "encoding_ladder": {
+    "template_encoding_ladder": {
         "encoding_profiles": [
             {
                 "bitrate": 4500000,
