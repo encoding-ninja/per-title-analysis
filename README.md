@@ -1,13 +1,29 @@
 # Per-Title Analysis
-This a python package providing tools for optimizing your over-the-top bitrate ladder per each video you need to encode.
+*This a python package providing tools for optimizing your over-the-top bitrate ladder per each video you need to encode.*
 
-Documentation will improve over time!
+___
 
-Dependencies:
+## What does it do?
+It analyze the video source file to create an optimized bitrate ladder.
+
+
+## How does it work?
+You can configure a template encoding ladder with constraints (min/max bitrate) that will be respected for the output optimal ladder.
+You also have the control over analysis parameters (based on CRF Encoding).
+
+The analyzer calculates an optimal bitrate for the higher profile.
+Other profiles are declined top to bottom from the initial gap between each profiles of the template ladder.
+
+### In depth: *(soon)*
+
+___
+
+##  Installation:
 You need to have ffmpeg and ffprobe installed on the host which is running the script.
 
-Example:
-```
+
+## Example:
+```python
 # -*- coding: utf8 -*-
 
 from pertitleanalysis import per_title_analysis as pta
