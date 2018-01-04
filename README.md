@@ -46,7 +46,6 @@ ANALYSIS = pta.Analyzer("{{ your_input_file_path }}", LADDER)
 
 # Launch various analysis
 ANALYSIS.process(1, 1920, 1080, 23, 2)
-ANALYSIS.process(1, 1920, 1080, 26, 2)
 ANALYSIS.process(10, 1920, 1080, 23, 2)
 
 # Print results
@@ -111,62 +110,6 @@ print(ANALYSIS.get_json())
                 "width": 1920
             },
             "processing_date": "2018-01-04 16:19:41.460371",
-            "standard_deviation": null
-        },
-        {
-            "average_bitrate": 2653970,
-            "optimized_encoding_ladder": {
-                "encoding_profiles": [
-                    {
-                        "bitrate": 2653970,
-                        "bitrate_savings": 1846030,
-                        "height": 1080,
-                        "width": 1920
-                    },
-                    {
-                        "bitrate": 2005221,
-                        "bitrate_savings": 1394779,
-                        "height": 720,
-                        "width": 1280
-                    },
-                    {
-                        "bitrate": 1238519,
-                        "bitrate_savings": 861481,
-                        "height": 540,
-                        "width": 960
-                    },
-                    {
-                        "bitrate": 648748,
-                        "bitrate_savings": 451252,
-                        "height": 360,
-                        "width": 640
-                    },
-                    {
-                        "bitrate": 442328,
-                        "bitrate_savings": 307672,
-                        "height": 270,
-                        "width": 480
-                    },
-                    {
-                        "bitrate": 176931,
-                        "bitrate_savings": 123069,
-                        "height": 270,
-                        "width": 480
-                    }
-                ],
-                "overall_bitrate_ladder": 7165717,
-                "overall_bitrate_savings": 4984283
-            },
-            "optimal_bitrate": 2653970,
-            "parameters": {
-                "crf_value": 26,
-                "height": 1080,
-                "idr_interval": 2,
-                "number_of_parts": 1,
-                "part_duration": 60.0,
-                "width": 1920
-            },
-            "processing_date": "2018-01-04 16:20:01.349371",
             "standard_deviation": null
         },
         {
