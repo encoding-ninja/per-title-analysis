@@ -219,12 +219,12 @@ class Metric(Task):
         Task.execute(self, command)
 
         # Parse output data
-        #try:
-        data = self.subprocess_err.splitlines()
-        for line in data:
-            line = str(line)
-            if "Parsed_ssim" in line:
-                self.output_value = float(line.split("All:")[1].split("(")[0].strip())
-        #except:
+        try:
+            data = self.subprocess_err.splitlines()
+            for line in data:
+                line = str(line)
+                if "Parsed_ssim" in line:
+                    self.output_value = float(line.split("All:")[1].split("(")[0].strip())
+        except:
             # TODO: error management
-            #pass
+            pass

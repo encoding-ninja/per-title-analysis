@@ -342,9 +342,29 @@ class MetricAnalyzer(Analyzer):
         part_duration = input_probe.duration
         idr_interval_frames =  idr_interval*input_probe.framerate
         
+        # Adding results to json
+        json_ouput = {}
+        json_ouput['processing_date'] = str(datetime.datetime.now())
+        json_ouput['parameters'] = {}
+        json_ouput['parameters']['method'] = "MetricAnalysis"
+        json_ouput['parameters']['metric'] = metric
+        json_ouput['parameters']['bitrate_steps'] = bitrate_steps
+        json_ouput['parameters']['idr_interval'] = idr_interval
+        json_ouput['parameters']['number_of_parts'] = 1
+        json_ouput['parameters']['part_duration'] = part_duration
+        json_ouput['optimized_encoding_ladder'] = {}
+        json_ouput['optimized_encoding_ladder']['encoding_profiles'] = []
+
         for encoding_profile in self.encoding_ladder.encoding_profile_list:
-            for bitrate in range(encoding_profile.bitrate_min, encoding_profile.bitrate_max, bitrate_steps):
-                
+            
+            profile = {}
+            profile['width'] = encoding_profile.width
+            profile['height'] = encoding_profile.height
+            profile['cbr_encodings'] = []
+
+            bitrate_max_range = encoding_profile.bitrate_max + (encoding_profile.bitrate_max % bitrate_steps)
+            for bitrate in range(encoding_profile.bitrate_min, bitrate_max_range, bitrate_steps):
+
                 # Do a CRF encode for the input file
                 cbr_encode = CbrEncode(self.input_file_path, encoding_profile.width, encoding_profile.height, bitrate, idr_interval_frames, part_start_time, part_duration)
                 cbr_encode.execute()
@@ -355,3 +375,12 @@ class MetricAnalyzer(Analyzer):
 
                 # Remove temporary CRF encoded file
                 os.remove(cbr_encode.output_file_path)
+
+                encoding = {}
+                encoding['bitrate'] = bitrate
+                encoding['metric_value'] = metric.output_value
+                profile['cbr_encodings'].append(encoding)
+            
+            json_ouput['optimized_encoding_ladder']['encoding_profiles'].append(profile)
+        
+        self.json['analyses'].append(json_ouput)
