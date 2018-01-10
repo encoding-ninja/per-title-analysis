@@ -77,7 +77,7 @@ class Probe(Task):
                     self.duration = float(stream['duration'])
                     self.video_codec = stream['codec_name']
                     self.framerate = int(stream['r_frame_rate'].replace('/1',''))
-        except:
+        except:     
             # TODO: error management
             pass
 
@@ -200,12 +200,16 @@ class Metric(Task):
 
         if os.path.isfile(ref_file_path) is True:       
             self.ref_file_path = ref_file_path
+            self.ref_width = ref_width
+            self.ref_height = ref_height
         else:
             raise ValueError('Cannot access the file: {}'.format(ref_file_path))
 
-        self.metric = metric
-        self.ref_width = ref_width
-        self.ref_height = ref_height
+        available_metrics = ['ssim', 'psnr']
+        self.metric = str(metric).strip().lower()
+        if self.metric not in available_metrics:       
+            raise ValueError('Available metrics are "ssim" and "psnr", does not include: {}'.format(metric))
+
         self.output_value = None
         
     def execute(self):
@@ -214,7 +218,7 @@ class Metric(Task):
                 '-hide_banner',
                 '-i', self.input_file_path,
                 '-i', self.ref_file_path,
-                '-lavfi', '[0]scale='+str(self.ref_width)+':'+str(self.ref_height)+'[scaled];[scaled][1]'+str(self.metric).strip()+'=stats_file=-',
+                '-lavfi', '[0]scale='+str(self.ref_width)+':'+str(self.ref_height)+'[scaled];[scaled][1]'+str(self.metric)+'=stats_file=-',
                 '-f', 'null', '-']
         Task.execute(self, command)
 
@@ -223,8 +227,11 @@ class Metric(Task):
             data = self.subprocess_err.splitlines()
             for line in data:
                 line = str(line)
-                if "Parsed_ssim" in line:
-                    self.output_value = float(line.split("All:")[1].split("(")[0].strip())
+                if 'Parsed_ssim' in line:
+                    self.output_value = float(line.split('All:')[1].split('(')[0].strip())
+                elif 'Parsed_psnr' in line:
+                    self.output_value = float(line.split('average:')[1].split('min:')[0].strip())
+                        
         except:
             # TODO: error management
             pass

@@ -369,15 +369,15 @@ class MetricAnalyzer(Analyzer):
                 cbr_encode.execute()
 
                 # Get the Bitrate from the CRF encoded file
-                metric = Metric(metric, cbr_encode.output_file_path, self.input_file_path, input_probe.width, input_probe.height)
-                metric.execute()
+                metric_assessment = Metric(metric, cbr_encode.output_file_path, self.input_file_path, input_probe.width, input_probe.height)
+                metric_assessment.execute()
 
                 # Remove temporary CRF encoded file
                 os.remove(cbr_encode.output_file_path)
 
                 encoding = {}
                 encoding['bitrate'] = bitrate
-                encoding['metric_value'] = metric.output_value
+                encoding['metric_value'] = metric_assessment.output_value
                 profile['cbr_encodings'].append(encoding)
             
             json_ouput['optimized_encoding_ladder']['encoding_profiles'].append(profile)
