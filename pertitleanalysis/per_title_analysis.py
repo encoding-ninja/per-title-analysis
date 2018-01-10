@@ -341,6 +341,7 @@ class MetricAnalyzer(Analyzer):
         part_start_time = 0
         part_duration = input_probe.duration
         idr_interval_frames =  idr_interval*input_probe.framerate
+        metric = str(metric).strip().lower()
         
         # Adding results to json
         json_ouput = {}
@@ -361,6 +362,9 @@ class MetricAnalyzer(Analyzer):
             profile['width'] = encoding_profile.width
             profile['height'] = encoding_profile.height
             profile['cbr_encodings'] = []
+            profile['optimal_bitrate'] = None
+
+            last_metric_value = 0
 
             for bitrate in range(encoding_profile.bitrate_min, (encoding_profile.bitrate_max + bitrate_steps), bitrate_steps):
 
@@ -379,6 +383,15 @@ class MetricAnalyzer(Analyzer):
                 encoding['bitrate'] = bitrate
                 encoding['metric_value'] = metric_assessment.output_value
                 profile['cbr_encodings'].append(encoding)
+
+                if 'ssim' in metric:
+                    if metric_assessment.output_value > (last_metric_value + 0.02):
+                        profile['optimal_bitrate'] = bitrate
+                elif 'psnr' in metric:
+                    if metric_assessment.output_value > last_metric_value:
+                        profile['optimal_bitrate'] = bitrate
+
+                last_metric_value = metric_assessment.output_value
             
             json_ouput['optimized_encoding_ladder']['encoding_profiles'].append(profile)
         
