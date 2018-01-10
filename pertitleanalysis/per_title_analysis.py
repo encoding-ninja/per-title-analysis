@@ -278,7 +278,7 @@ class CrfAnalyzer(Analyzer):
         result = {}
         result['processing_date'] = str(datetime.datetime.now())
         result['parameters'] = {}
-        result['parameters']['method'] = "CrfAnalysis"
+        result['parameters']['method'] = "CRF"
         result['parameters']['width'] = width
         result['parameters']['height'] = height
         result['parameters']['crf_value'] = crf_value
@@ -346,7 +346,7 @@ class MetricAnalyzer(Analyzer):
         json_ouput = {}
         json_ouput['processing_date'] = str(datetime.datetime.now())
         json_ouput['parameters'] = {}
-        json_ouput['parameters']['method'] = "MetricAnalysis"
+        json_ouput['parameters']['method'] = "Metric"
         json_ouput['parameters']['metric'] = metric
         json_ouput['parameters']['bitrate_steps'] = bitrate_steps
         json_ouput['parameters']['idr_interval'] = idr_interval
@@ -362,8 +362,7 @@ class MetricAnalyzer(Analyzer):
             profile['height'] = encoding_profile.height
             profile['cbr_encodings'] = []
 
-            bitrate_max_range = encoding_profile.bitrate_max + (encoding_profile.bitrate_max % bitrate_steps)
-            for bitrate in range(encoding_profile.bitrate_min, bitrate_max_range, bitrate_steps):
+            for bitrate in range(encoding_profile.bitrate_min, (encoding_profile.bitrate_max + bitrate_steps), bitrate_steps):
 
                 # Do a CRF encode for the input file
                 cbr_encode = CbrEncode(self.input_file_path, encoding_profile.width, encoding_profile.height, bitrate, idr_interval_frames, part_start_time, part_duration)

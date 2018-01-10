@@ -4,10 +4,16 @@
 
 ## How does it work?
 You can configure a template encoding ladder with constraints (min/max bitrate) that will be respected for the output optimal ladder.
-You also have the control over analysis parameters (based on CRF Encoding).
+You also have the control over analysis parameters (based on CRF encoding or multiple bitrate encodings with video quality metric assessments).
 
-The analyzer calculates an optimal bitrate for the higher profile.
+The CRF Analyzer
+This analyzer calculates an optimal bitrate for the higher profile.
 Other profiles are declined top to bottom from the initial gap between each profiles of the template ladder.
+
+The Metric Analyzer
+This analyzer encodes multiple bitrates for each profile in the template ladder (from min to max, respecting a bitrate step defined by the user)
+It then calculates video quality metrics for each of these encodings (only ssim or psnr for now).
+The final optimized ladder will be constructed choosing for the best quality/bitrate ratio (similar to Netflix).
 
 ### The template encoding ladder
 It is composed of multiple encoding profile object.
@@ -47,6 +53,8 @@ You need to have ffmpeg and ffprobe installed on the host running the script.
 
 
 ## Example:
+This is an example using the CRF Analyzer method.
+
 ##### Code:
 ```python
 # -*- coding: utf8 -*-
@@ -63,9 +71,8 @@ PROFILE_LIST.append(pta.EncodingProfile(480, 270, 750000, 300000, 900000, False)
 PROFILE_LIST.append(pta.EncodingProfile(480, 270, 300000, 150000, 500000, True))
 LADDER = pta.EncodingLadder(PROFILE_LIST)
 
-# Create a new analysis provider 
-ANALYSIS = pta.Analyzer("{{ your_input_file_path }}", LADDER)
-
+# Create a new CRF analysis provider 
+ANALYSIS = pta.CrfAnalyzer("{{ your_input_file_path }}", LADDER)
 # Launch various analysis
 ANALYSIS.process(1, 1920, 1080, 23, 2)
 ANALYSIS.process(10, 1920, 1080, 23, 2)
@@ -127,6 +134,7 @@ print(ANALYSIS.get_json())
                 "crf_value": 23,
                 "height": 1080,
                 "idr_interval": 2,
+                "method": "CRF",
                 "number_of_parts": 1,
                 "part_duration": 60.0,
                 "width": 1920
@@ -183,6 +191,7 @@ print(ANALYSIS.get_json())
                 "crf_value": 23,
                 "height": 1080,
                 "idr_interval": 2,
+                "method": "CRF",
                 "number_of_parts": 10,
                 "part_duration": 6.0,
                 "width": 1920
