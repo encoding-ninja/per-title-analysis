@@ -6,7 +6,7 @@ import json
 import datetime
 import statistics
 
-from .task_providers import Probe, CrfEncode
+from .task_providers import Probe, CrfEncode, CbrEncode, Metric
 
 
 class EncodingProfile(object):
@@ -201,7 +201,7 @@ class Analyzer(object):
 
 
 class CrfAnalyzer(Analyzer):
-    """This class defines a Per-Title Analyzer"""
+    """This class defines a Per-Title Analyzer based on calculating the top bitrate wit CRF, then deducting the ladder"""
 
     def process(self, number_of_parts, width, height, crf_value, idr_interval):
         """Do the necessary crf encodings and assessments
@@ -318,3 +318,40 @@ class CrfAnalyzer(Analyzer):
         result['optimized_encoding_ladder']['overall_bitrate_ladder'] = overall_bitrate_optimal
         result['optimized_encoding_ladder']['overall_bitrate_savings'] = self.encoding_ladder.get_overall_bitrate() - overall_bitrate_optimal
         self.json['analyses'].append(result)
+
+
+class MetricAnalyzer(Analyzer):
+    """This class defines a Per-Title Analyzer based on VQ Metric and Multiple bitrate encodes"""
+
+    def process(self, metric, bitrate_steps, idr_interval):
+        """Do the necessary encodings and quality metric assessments
+
+        :param metric: Supporting "ssim" or "psnr"
+        :type metric: string
+        :param bitrate_steps: Bitrate gap between every encoding
+        :type bitrate_steps: int
+        :param idr_interval: IDR interval in seconds
+        :type idr_interval: int
+        """
+
+        # Start by probing the input video file
+        input_probe = Probe(self.input_file_path)
+        input_probe.execute()
+        
+        part_start_time = 0
+        part_duration = input_probe.duration
+        idr_interval_frames =  idr_interval*input_probe.framerate
+        
+        for encoding_profile in self.encoding_ladder.encoding_profile_list:
+            for bitrate in range(encoding_profile.bitrate_min, encoding_profile.bitrate_max, bitrate_steps):
+                
+                # Do a CRF encode for the input file
+                cbr_encode = CbrEncode(self.input_file_path, encoding_profile.width, encoding_profile.height, bitrate, idr_interval_frames, part_start_time, part_duration)
+                cbr_encode.execute()
+
+                # Get the Bitrate from the CRF encoded file
+                metric = Metric(metric, cbr_encode.output_file_path, self.input_file_path, input_probe.width, input_probe.height)
+                metric.execute()
+
+                # Remove temporary CRF encoded file
+                os.remove(cbr_encode.output_file_path)

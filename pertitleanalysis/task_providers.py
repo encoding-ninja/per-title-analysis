@@ -130,3 +130,101 @@ class CrfEncode(Task):
                 '-x264opts', 'keyint=' + str(self.idr_interval),
                 '-y', self.output_file_path]
         Task.execute(self, command)
+
+
+class CbrEncode(Task):
+    """This class defines a CBR encoding task"""
+
+    def __init__(self, input_file_path, width, height, cbr_value, idr_interval, part_start_time, part_duration):
+        """CrfEncode initialization
+        
+        :param input_file_path: The input video file path
+        :type input_file_path: str
+        :param width: Width of the CBR encode
+        :type width: int
+        :param height: Height of the CBR encode
+        :type height: int
+        :param cbr_value: The CBR Encoding value for ffmpeg
+        :type cbr_value: int
+        :param idr_interval: IDR Interval in frames ('None' value is no fix IDR interval needed)
+        :type idr_interval: int
+        :param part_start_time: Encode seek start time (in seconds)
+        :type part_start_time: float
+        :param part_duration: Encode duration (in seconds)
+        :type part_duration: float
+        """
+        Task.__init__(self, input_file_path)
+
+        self.definition = str(width)+'x'+str(height)
+        self.cbr_value = cbr_value
+        self.idr_interval = idr_interval
+        self.part_start_time = part_start_time
+        self.part_duration = part_duration
+
+        # Generate a temporary file name for the task output
+        self.output_file_path = os.path.join(os.path.dirname(self.input_file_path), 
+                                             os.path.splitext(os.path.basename(self.input_file_path))[0] + "_"+uuid.uuid4().hex+".mp4")
+ 
+    def execute(self):
+        """Using FFmpeg to CRF Encode a file or part of a file"""
+        command = ['ffmpeg',
+                '-hide_banner', '-loglevel', 'quiet', '-nostats',
+                '-ss', str(self.part_start_time),
+                '-i', self.input_file_path,
+                '-t', str(self.part_duration),
+                '-c:v', 'libx264', 
+                '-an', '-deinterlace',
+                '-b:v', str(self.cbr_value),
+                '-pix_fmt', 'yuv420p',
+                '-s', self.definition,
+                '-x264opts', 'keyint=' + str(self.idr_interval),
+                '-y', self.output_file_path]
+        Task.execute(self, command)
+
+
+class Metric(Task):
+    """This class defines a Probing task"""
+
+    def __init__(self, metric, input_file_path, ref_file_path, ref_width, ref_height):
+        """Probe initialization
+        
+        :param metric: Supporting "ssim" or "psnr"
+        :type metric: string
+        :param input_file_path: The input video file path, the one to be analyzed
+        :type input_file_path: str
+        :param ref_file_path: The reference video file path
+        :type ref_file_path: str
+        
+        """
+        Task.__init__(self, input_file_path)
+
+        if os.path.isfile(ref_file_path) is True:       
+            self.ref_file_path = ref_file_path
+        else:
+            raise ValueError('Cannot access the file: {}'.format(ref_file_path))
+
+        self.metric = metric
+        self.ref_width = ref_width
+        self.ref_height = ref_height
+        self.output_value = None
+        
+    def execute(self):
+        """Using FFmpeg to process metric assessments"""
+        command = ['ffmpeg',
+                '-hide_banner',
+                '-i', self.input_file_path,
+                '-i', self.ref_file_path,
+                '-lavfi', '[0]scale='+str(self.ref_width)+':'+str(self.ref_height)+'[scaled];[scaled][1]'+str(self.metric).strip()+'=stats_file=-',
+                '-f', 'null', '-']
+        Task.execute(self, command)
+
+        # Parse output data
+        #try:
+        data = self.subprocess_err.splitlines()
+        for line in data:
+            line = str(line)
+            if "Parsed_ssim" in line:
+                self.output_value = float(line.split("All:")[1].split("(")[0].strip())
+        #except:
+            # TODO: error management
+            #pass
