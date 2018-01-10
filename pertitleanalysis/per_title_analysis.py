@@ -203,33 +203,6 @@ class Analyzer(object):
 class CrfAnalyzer(Analyzer):
     """This class defines a Per-Title Analyzer"""
 
-    def __init__(self, input_file_path, encoding_ladder):
-        """Analyzer initialization
-
-        :param input_file_path: The input video file path
-        :type input_file_path: str
-        :param encoding_ladder: An EncodingLadder object
-        :type encoding_ladder: per_title.EncodingLadder
-        """
-        Analyzer.__init__(self, input_file_path, encoding_ladder)
-
-    def __str__(self):
-        """Display the per title analysis informations
-
-        :return: human readable string describing all analyzer configuration
-        :rtype: str
-        """
-        Analyzer.__str__(self)
-
-    def get_json(self):
-        """Return object details in json
-
-        :return: json object describing all inputs configuration and output analyses
-        :rtype: str
-        """
-        Analyzer.get_json(self)
-
-
     def process(self, number_of_parts, width, height, crf_value, idr_interval):
         """Do the necessary crf encodings and assessments
 
