@@ -174,6 +174,7 @@ class Analyzer(object):
         self.average_bitrate = None
         self.standard_deviation = None
         self.optimal_bitrate = None
+        self.peak_bitrate = None
 
         # init json result
         self.json = {}
@@ -244,6 +245,7 @@ class CrfAnalyzer(Analyzer):
             
         # Calculate the average bitrate for all CRF encodings
         self.average_bitrate = statistics.mean(crf_bitrate_list)
+        self.peak_bitrate = max(crf_bitrate_list)
 
         if number_of_parts > 1:
             # Calculate the the standard deviation of crf bitrate values
@@ -285,9 +287,11 @@ class CrfAnalyzer(Analyzer):
         result['parameters']['idr_interval'] = idr_interval
         result['parameters']['number_of_parts'] = number_of_parts
         result['parameters']['part_duration'] = part_duration
-        result['optimal_bitrate'] = self.optimal_bitrate
-        result['average_bitrate'] = self.average_bitrate
-        result['standard_deviation'] = self.standard_deviation
+        result['bitrate'] = []
+        result['bitrate']['optimal'] = self.optimal_bitrate
+        result['bitrate']['average'] = self.average_bitrate
+        result['bitrate']['peak'] = self.average_bitrate
+        result['bitrate']['standard_deviation'] = self.standard_deviation
         result['optimized_encoding_ladder'] = {}
         result['optimized_encoding_ladder']['encoding_profiles'] = []
 
@@ -365,6 +369,7 @@ class MetricAnalyzer(Analyzer):
             profile['optimal_bitrate'] = None
 
             last_metric_value = 0
+            last_quality_step_ratio = 0
 
             for bitrate in range(encoding_profile.bitrate_min, (encoding_profile.bitrate_max + bitrate_steps), bitrate_steps):
 
@@ -379,20 +384,34 @@ class MetricAnalyzer(Analyzer):
                 # Remove temporary CRF encoded file
                 os.remove(cbr_encode.output_file_path)
 
+                if last_metric_value is 0 :
+                    # for first value, you cannot calculate acurate jump in quality from nothing
+                    last_metric_value = metric_assessment.output_value
+                    profile['optimal_bitrate'] = bitrate
+                    quality_step_ratio = (metric_assessment.output_value)/bitrate # frist step from null to the starting bitrate
+                else:
+                    quality_step_ratio = (metric_assessment.output_value - last_metric_value)/bitrate_steps
+
+                if quality_step_ratio >= (last_quality_step_ratio/2):
+                    profile['optimal_bitrate'] = bitrate
+
+                #if 'ssim' in metric:
+                #    if metric_assessment.output_value >= (last_metric_value + 0.01):
+                #        profile['optimal_bitrate'] = bitrate
+                #elif 'psnr' in metric:
+                #    if metric_assessment.output_value > last_metric_value:
+                #        profile['optimal_bitrate'] = bitrate
+
+                last_metric_value = metric_assessment.output_value
+                last_quality_step_ratio = quality_step_ratio
+
                 encoding = {}
                 encoding['bitrate'] = bitrate
                 encoding['metric_value'] = metric_assessment.output_value
+                encoding['quality_step_ratio'] = quality_step_ratio
                 profile['cbr_encodings'].append(encoding)
 
-                if 'ssim' in metric:
-                    if metric_assessment.output_value > (last_metric_value + 0.02):
-                        profile['optimal_bitrate'] = bitrate
-                elif 'psnr' in metric:
-                    if metric_assessment.output_value > last_metric_value:
-                        profile['optimal_bitrate'] = bitrate
-
-                last_metric_value = metric_assessment.output_value
-            
+            profile['bitrate_savings'] = encoding_profile.bitrate_default - profile['optimal_bitrate']
             json_ouput['optimized_encoding_ladder']['encoding_profiles'].append(profile)
         
         self.json['analyses'].append(json_ouput)
