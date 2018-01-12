@@ -287,7 +287,7 @@ class CrfAnalyzer(Analyzer):
         result['parameters']['idr_interval'] = idr_interval
         result['parameters']['number_of_parts'] = number_of_parts
         result['parameters']['part_duration'] = part_duration
-        result['bitrate'] = []
+        result['bitrate'] = {}
         result['bitrate']['optimal'] = self.optimal_bitrate
         result['bitrate']['average'] = self.average_bitrate
         result['bitrate']['peak'] = self.average_bitrate
