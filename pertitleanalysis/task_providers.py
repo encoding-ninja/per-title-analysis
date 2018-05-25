@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 import os
 import json
@@ -10,11 +10,11 @@ class Task(object):
 
     def __init__(self, input_file_path):
         """Task initialization
-        
+
         :param input_file_path: The input video file path
         :type input_file_path: str
         """
-        if os.path.isfile(input_file_path) is True:       
+        if os.path.isfile(input_file_path) is True:
             self.input_file_path = input_file_path
         else:
             raise ValueError('Cannot access the file: {}'.format(input_file_path))
@@ -44,7 +44,7 @@ class Probe(Task):
 
     def __init__(self, input_file_path):
         """Probe initialization
-        
+
         :param input_file_path: The input video file path
         :type input_file_path: str
         """
@@ -62,13 +62,14 @@ class Probe(Task):
         command = ['ffprobe',
                 '-hide_banner',
                 '-i', self.input_file_path,
-                '-show_format', '-show_streams', 
+                '-show_format', '-show_streams',
                 '-print_format', 'json']
         Task.execute(self, command)
 
         # Parse output data
         try:
-            data = json.loads(self.subprocess_out)
+            response = self.subprocess_out
+            data = json.loads(response.decode('utf-8'))
             for stream in data['streams']:
                 if stream['codec_type'] == 'video':
                     self.width = int(stream['width'])
@@ -77,9 +78,9 @@ class Probe(Task):
                     self.duration = float(stream['duration'])
                     self.video_codec = stream['codec_name']
                     self.framerate = int(stream['r_frame_rate'].replace('/1',''))
-        except:     
-            # TODO: error management
-            pass
+        except:
+             # TODO: error management
+             pass
 
 
 class CrfEncode(Task):
@@ -87,7 +88,7 @@ class CrfEncode(Task):
 
     def __init__(self, input_file_path, width, height, crf_value, idr_interval, part_start_time, part_duration):
         """CrfEncode initialization
-        
+
         :param input_file_path: The input video file path
         :type input_file_path: str
         :param width: Width of the CRF encode
@@ -112,9 +113,16 @@ class CrfEncode(Task):
         self.part_duration = part_duration
 
         # Generate a temporary file name for the task output
-        self.output_file_path = os.path.join(os.path.dirname(self.input_file_path), 
+        self.output_file_path = os.path.join(os.path.dirname(self.input_file_path),
                                              os.path.splitext(os.path.basename(self.input_file_path))[0] + "_"+uuid.uuid4().hex+".mp4")
- 
+        print(self.output_file_path)
+        print(self.part_start_time)
+        print(self.input_file_path)
+        print(self.part_duration)
+        print(self.crf_value)
+        print(self.definition)
+        print(self.idr_interval)                                 
+
     def execute(self):
         """Using FFmpeg to CRF Encode a file or part of a file"""
         command = ['ffmpeg',
@@ -122,7 +130,7 @@ class CrfEncode(Task):
                 '-ss', str(self.part_start_time),
                 '-i', self.input_file_path,
                 '-t', str(self.part_duration),
-                '-preset', 'ultrafast', 
+                '-preset', 'ultrafast',
                 '-an', '-deinterlace',
                 '-crf', str(self.crf_value),
                 '-pix_fmt', 'yuv420p',
@@ -137,7 +145,7 @@ class CbrEncode(Task):
 
     def __init__(self, input_file_path, width, height, cbr_value, idr_interval, part_start_time, part_duration):
         """CrfEncode initialization
-        
+
         :param input_file_path: The input video file path
         :type input_file_path: str
         :param width: Width of the CBR encode
@@ -162,9 +170,9 @@ class CbrEncode(Task):
         self.part_duration = part_duration
 
         # Generate a temporary file name for the task output
-        self.output_file_path = os.path.join(os.path.dirname(self.input_file_path), 
+        self.output_file_path = os.path.join(os.path.dirname(self.input_file_path),
                                              os.path.splitext(os.path.basename(self.input_file_path))[0] + "_"+uuid.uuid4().hex+".mp4")
- 
+
     def execute(self):
         """Using FFmpeg to CRF Encode a file or part of a file"""
         command = ['ffmpeg',
@@ -172,7 +180,7 @@ class CbrEncode(Task):
                 '-ss', str(self.part_start_time),
                 '-i', self.input_file_path,
                 '-t', str(self.part_duration),
-                '-c:v', 'libx264', 
+                '-c:v', 'libx264',
                 '-an', '-deinterlace',
                 '-b:v', str(self.cbr_value),
                 '-pix_fmt', 'yuv420p',
@@ -187,18 +195,18 @@ class Metric(Task):
 
     def __init__(self, metric, input_file_path, ref_file_path, ref_width, ref_height):
         """Probe initialization
-        
+
         :param metric: Supporting "ssim" or "psnr"
         :type metric: string
         :param input_file_path: The input video file path, the one to be analyzed
         :type input_file_path: str
         :param ref_file_path: The reference video file path
         :type ref_file_path: str
-        
+
         """
         Task.__init__(self, input_file_path)
 
-        if os.path.isfile(ref_file_path) is True:       
+        if os.path.isfile(ref_file_path) is True:
             self.ref_file_path = ref_file_path
             self.ref_width = ref_width
             self.ref_height = ref_height
@@ -207,11 +215,11 @@ class Metric(Task):
 
         available_metrics = ['ssim', 'psnr']
         self.metric = str(metric).strip().lower()
-        if self.metric not in available_metrics:       
+        if self.metric not in available_metrics:
             raise ValueError('Available metrics are "ssim" and "psnr", does not include: {}'.format(metric))
 
         self.output_value = None
-        
+
     def execute(self):
         """Using FFmpeg to process metric assessments"""
         command = ['ffmpeg',
@@ -231,7 +239,7 @@ class Metric(Task):
                     self.output_value = float(line.split('All:')[1].split('(')[0].strip())
                 elif 'Parsed_psnr' in line:
                     self.output_value = float(line.split('average:')[1].split('min:')[0].strip())
-                        
+
         except:
             # TODO: error management
             pass
