@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 from __future__ import division
 import os
@@ -14,7 +14,7 @@ class EncodingProfile(object):
 
     def __init__(self, width, height, bitrate_default, bitrate_min, bitrate_max, required):
         """EncodingProfile initialization
-        
+
         :param width: Video profile width
         :type width: int
         :param height: Video profile height
@@ -33,7 +33,7 @@ class EncodingProfile(object):
             raise ValueError('The EncodingProfile.width value is required')
         else:
             self.width = int(width)
-    
+
         if height is None:
             raise ValueError('The EncodingProfile.height value is required')
         else:
@@ -43,7 +43,7 @@ class EncodingProfile(object):
             raise ValueError('The EncodingProfile.bitrate_default value is required')
         else:
             self.bitrate_default = int(bitrate_default)
-        
+
         if int(bitrate_min) <= self.bitrate_default:
             self.bitrate_min = int(bitrate_min)
         else:
@@ -60,7 +60,7 @@ class EncodingProfile(object):
             self.required = True
 
         self.bitrate_factor = None
-    
+
     def __str__(self):
         """Display the encoding profile informations
 
@@ -113,10 +113,10 @@ class EncodingLadder(object):
         for encoding_profile in self.encoding_profile_list:
             string += str(encoding_profile) + "\n"
         return string
-    
+
     def get_json(self):
         """Return object details in json
-        
+
         :return: json object describing the encoding ladder template
         :rtype: str
         """
@@ -129,7 +129,7 @@ class EncodingLadder(object):
 
     def get_max_bitrate(self):
         """Get the max bitrate in the ladder
-        
+
         :return: The maximum bitrate into the encoding laddder template
         :rtype: int
         """
@@ -141,7 +141,7 @@ class EncodingLadder(object):
 
     def get_overall_bitrate(self):
         """Get the overall bitrate for the ladder
-        
+
         :return: The sum of all bitrate profiles into the encoding laddder template
         :rtype: int
         """
@@ -170,7 +170,7 @@ class Analyzer(object):
         """
         self.input_file_path = input_file_path
         self.encoding_ladder = encoding_ladder
-        
+
         self.average_bitrate = None
         self.standard_deviation = None
         self.optimal_bitrate = None
@@ -242,7 +242,7 @@ class CrfAnalyzer(Analyzer):
 
             # Set the crf bitrate
             crf_bitrate_list.append(crf_probe.bitrate)
-            
+
         # Calculate the average bitrate for all CRF encodings
         self.average_bitrate = statistics.mean(crf_bitrate_list)
         self.peak_bitrate = max(crf_bitrate_list)
@@ -303,7 +303,7 @@ class CrfAnalyzer(Analyzer):
             remove_profile = False
             if target_bitrate < encoding_profile.bitrate_min and encoding_profile.required is False:
                 remove_profile = True
-            
+
             if target_bitrate < encoding_profile.bitrate_min:
                 target_bitrate = encoding_profile.bitrate_min
 
@@ -318,7 +318,7 @@ class CrfAnalyzer(Analyzer):
                 profile['bitrate'] = target_bitrate
                 profile['bitrate_savings'] = encoding_profile.bitrate_default - target_bitrate
                 result['optimized_encoding_ladder']['encoding_profiles'].append(profile)
-            
+
         result['optimized_encoding_ladder']['overall_bitrate_ladder'] = overall_bitrate_optimal
         result['optimized_encoding_ladder']['overall_bitrate_savings'] = self.encoding_ladder.get_overall_bitrate() - overall_bitrate_optimal
         self.json['analyses'].append(result)
@@ -341,12 +341,12 @@ class MetricAnalyzer(Analyzer):
         # Start by probing the input video file
         input_probe = Probe(self.input_file_path)
         input_probe.execute()
-        
+
         part_start_time = 0
         part_duration = input_probe.duration
         idr_interval_frames =  idr_interval*input_probe.framerate
         metric = str(metric).strip().lower()
-        
+
         # Adding results to json
         json_ouput = {}
         json_ouput['processing_date'] = str(datetime.datetime.now())
@@ -361,7 +361,7 @@ class MetricAnalyzer(Analyzer):
         json_ouput['optimized_encoding_ladder']['encoding_profiles'] = []
 
         for encoding_profile in self.encoding_ladder.encoding_profile_list:
-            
+
             profile = {}
             profile['width'] = encoding_profile.width
             profile['height'] = encoding_profile.height
@@ -413,5 +413,5 @@ class MetricAnalyzer(Analyzer):
 
             profile['bitrate_savings'] = encoding_profile.bitrate_default - profile['optimal_bitrate']
             json_ouput['optimized_encoding_ladder']['encoding_profiles'].append(profile)
-        
+
         self.json['analyses'].append(json_ouput)
