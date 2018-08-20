@@ -1,138 +1,59 @@
 # -*- coding: utf-8 -*-
 
+#importation
+
 from __future__ import division
+from pylab import *
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import sys
 import os
 import json
 import datetime
 import statistics
 
-from .task_providers import Probe, CrfEncode, CbrEncode, Metric
+from task_providers import Probe, CrfEncode, CbrEncode, Metric
 
+
+#class_1_création des profiles d'encodage ('ici on travaille à l'échelle d'un profil d'encodage)
 
 class EncodingProfile(object):
-    """This class defines an encoding profile"""
 
-    def __init__(self, width, height, bitrate_default, bitrate_min, bitrate_max, required):
-        """EncodingProfile initialization
+    def __init__(self, width, height, bitrate_default, bitrate_min, bitrate_max, required, bitrate_steps_by_default):
+        #call: PROFILE_LIST.append(pta.EncodingProfile(480, 270, 300000, 150000, 500000, True, 150000))
 
-        :param width: Video profile width
-        :type width: int
-        :param height: Video profile height
-        :type height: int
-        :param bitrate_default: Video profile bitrate default (in bits per second)
-        :type bitrate_default: int
-        :param bitrate_min: Video profile bitrate min constraint (in bits per second)
-        :type bitrate_min: int
-        :param bitrate_max: Video profile bitrate max constraint (in bits per second)
-        :type bitrate_max: int
-        :param required: The video profile is required and cannot be removed from the optimized encoding ladder
-        :type required: bool
-        """
-
-        if width is None:
-            raise ValueError('The EncodingProfile.width value is required')
-        else:
             self.width = int(width)
-
-        if height is None:
-            raise ValueError('The EncodingProfile.height value is required')
-        else:
             self.height = int(height)
-
-        if bitrate_default is None:
-            raise ValueError('The EncodingProfile.bitrate_default value is required')
-        else:
             self.bitrate_default = int(bitrate_default)
-
-        if int(bitrate_min) <= self.bitrate_default:
             self.bitrate_min = int(bitrate_min)
-        else:
-            self.bitrate_min = self.bitrate_default
-
-        if int(bitrate_max) >= self.bitrate_default:
             self.bitrate_max = int(bitrate_max)
-        else:
-            self.bitrate_max = self.bitrate_default
+            self.bitrate_factor = None
+            self.bitrate_steps_by_default = int(bitrate_steps_by_default)
+            if required is not None:
+                self.required = required
+            else:
+                self.required = True
 
-        if required is not None:
-            self.required = required
-        else:
-            self.required = True
-
-        self.bitrate_factor = None
-
-    def __str__(self):
-        """Display the encoding profile informations
-
-        :return: human readable string describing an encoding profil object
-        :rtype: str
-        """
-        return "{}x{}, bitrate_default={}, bitrate_min={}, bitrate_max={}, bitrate_factor={}, required={}".format(self.width, self.height, self.bitrate_default, self.bitrate_min, self.bitrate_max, self.bitrate_factor, self.required)
-
-    def get_json(self):
-        """Return object details in json
-
-        :return: json object describing the encoding profile and the configured constraints
-        :rtype: str
-        """
-        profile = {}
-        profile['width'] = self.width
-        profile['height'] = self.height
-        profile['bitrate'] = self.bitrate_default
-        profile['constraints'] = {}
-        profile['constraints']['bitrate_min'] = self.bitrate_min
-        profile['constraints']['bitrate_max'] = self.bitrate_max
-        profile['constraints']['bitrate_factor'] = self.bitrate_factor
-        profile['constraints']['required'] = self.required
-        return json.dumps(profile)
-
-    def set_bitrate_factor(self, ladder_max_bitrate):
-        """Set the bitrate factor from the max bitrate in the encoding ladder"""
+    def set_bitrate_factor(self, ladder_max_bitrate): #fonction utilisée dans le calculate_bitrate_factors
         self.bitrate_factor = ladder_max_bitrate/self.bitrate_default
+        #print('the bitrate factor for ',self.width, 'x', self.height, 'is:', self.bitrate_factor)
 
+
+
+#class_2_création de l'échelle des profiles d'encodage (ici on travaille à l'échelle de la liste d'ensemble des profiles)
 
 class EncodingLadder(object):
-    """This class defines an over-the-top encoding ladder template"""
 
     def __init__(self, encoding_profile_list):
-        """EncodingLadder initialization
+        #call: LADDER = pta.EncodingLadder(PROFILE_LIST)
 
-        :param encoding_profile_list: A list of multiple encoding profiles
-        :type encoding_profile_list: per_title.EncodingProfile[]
-        """
         self.encoding_profile_list = encoding_profile_list
         self.calculate_bitrate_factors()
-
-    def __str__(self):
-        """Display the encoding ladder informations
-
-        :return: human readable string describing the encoding ladder template
-        :rtype: str
-        """
-        string = "{} encoding profiles\n".format(len(self.encoding_profile_list))
-        for encoding_profile in self.encoding_profile_list:
-            string += str(encoding_profile) + "\n"
-        return string
-
-    def get_json(self):
-        """Return object details in json
-
-        :return: json object describing the encoding ladder template
-        :rtype: str
-        """
-        ladder = {}
-        ladder['overall_bitrate_ladder'] = self.get_overall_bitrate()
-        ladder['encoding_profiles'] = []
-        for encoding_profile in self.encoding_profile_list:
-            ladder['encoding_profiles'].append(json.loads(encoding_profile.get_json()))
-        return json.dumps(ladder)
+        #pour calculer le bitrate_factor on a besoin d'abord d'obtenir le bitrate_default max de la liste encoding_profile_list, ensuite on applique la fonction set_bitrate factor qui
+        #pour chaque profile va déterminer le facteur par une simple division.
 
     def get_max_bitrate(self):
-        """Get the max bitrate in the ladder
-
-        :return: The maximum bitrate into the encoding laddder template
-        :rtype: int
-        """
+        #parcours la liste des débits dispo et ressort le max parmi les bitrate default !!
         ladder_max_bitrate = 0
         for encoding_profile in self.encoding_profile_list:
             if encoding_profile.bitrate_default > ladder_max_bitrate:
@@ -140,34 +61,26 @@ class EncodingLadder(object):
         return ladder_max_bitrate
 
     def get_overall_bitrate(self):
-        """Get the overall bitrate for the ladder
 
-        :return: The sum of all bitrate profiles into the encoding laddder template
-        :rtype: int
-        """
         ladder_overall_bitrate = 0
         for encoding_profile in self.encoding_profile_list:
             ladder_overall_bitrate += encoding_profile.bitrate_default
         return ladder_overall_bitrate
 
-    def calculate_bitrate_factors(self):
-        """Calculate the bitrate factor for each profile"""
+    def calculate_bitrate_factors(self): #cf plus haut !
+
         ladder_max_bitrate = self.get_max_bitrate()
         for encoding_profile in self.encoding_profile_list:
             encoding_profile.set_bitrate_factor(ladder_max_bitrate)
 
 
+#class_3_préparation des opérations d'analyse, initialisation des variables
+
 class Analyzer(object):
-    """This class defines a Per-Title Analyzer"""
 
     def __init__(self, input_file_path, encoding_ladder):
-        """Analyzer initialization
 
-        :param input_file_path: The input video file path
-        :type input_file_path: str
-        :param encoding_ladder: An EncodingLadder object
-        :type encoding_ladder: per_title.EncodingLadder
-        """
+
         self.input_file_path = input_file_path
         self.encoding_ladder = encoding_ladder
 
@@ -176,79 +89,70 @@ class Analyzer(object):
         self.optimal_bitrate = None
         self.peak_bitrate = None
 
-        # init json result
-        self.json = {}
-        self.json['input_file_path'] = self.input_file_path
-        self.json['template_encoding_ladder'] = json.loads(self.encoding_ladder.get_json())
-        self.json['analyses'] = []
 
-    def __str__(self):
-        """Display the per title analysis informations
 
-        :return: human readable string describing all analyzer configuration
-        :rtype: str
-        """
-        string = "Per-Title Analysis for: {}\n".format(self.input_file_path)
-        string += str(self.encoding_ladder)
-        return string
-
-    def get_json(self):
-        """Return object details in json
-
-        :return: json object describing all inputs configuration and output analyses
-        :rtype: str
-        """
-        return json.dumps(self.json, indent=4, sort_keys=True)
-
+#class_4_analyse du débit oprimal pour une qualité constante définie, le number of part désigne le nombre de découpage réalisé sur la source pour pouvoir trouver au mieux pour optimiser le débit sur des cas complexes.
 
 class CrfAnalyzer(Analyzer):
-    """This class defines a Per-Title Analyzer based on calculating the top bitrate wit CRF, then deducting the ladder"""
+    #cette classe s'appuie grandement sur la classe prècèdente donc pas d'init !!! elle est appellé dans le fichier test.py juste deux fois
 
-    def process(self, number_of_parts, width, height, crf_value, idr_interval):
-        """Do the necessary crf encodings and assessments
 
-        :param number_of_parts: Number of part/segment for the analysis
-        :type number_of_parts: int
-        :param width: Width of the CRF encode
-        :type width: int
-        :param height: Height of the CRF encode
-        :type height: int
-        :param crf_value: Constant Rate Factor: this is a constant quality factor, see ffmpeg.org for more documentation on this parameter
-        :type crf_value: int
-        :param idr_interval: IDR interval in seconds
-        :type idr_interval: int
-        """
-        # Start by probing the input video file
-        input_probe = Probe(self.input_file_path)
-        input_probe.execute()
+    def set_bitrate(self,number_of_parts):
 
-        crf_bitrate_list = []
-        part_duration = input_probe.duration/number_of_parts
-        idr_interval_frames =  idr_interval*input_probe.framerate
+        overall_bitrate_optimal = 0 #pour tous les profiles on va réaliser des opérations avec le facteur calculé pour en déduire les débit 'mode linéaire'
+        for encoding_profile in self.encoding_ladder.encoding_profile_list:
+            #print('encoding profile is : ',encoding_profile.bitrate_default)
 
-        for i in range(0,number_of_parts):
-            part_start_time = i*part_duration
+            target_bitrate = int(self.optimal_bitrate/encoding_profile.bitrate_factor)
+            #print ('target bitrate=',target_bitrate)
+            remove_profile = False
+            if target_bitrate < encoding_profile.bitrate_min and encoding_profile.required is False:
+                remove_profile = True
 
-            # Do a CRF encode for the input file
+            # if target_bitrate < encoding_profile.bitrate_min:
+            #     target_bitrate = encoding_profile.bitrate_min
+            #
+            # if target_bitrate > encoding_profile.bitrate_max:
+            #     target_bitrate = encoding_profile.bitrate_max
+
+            if remove_profile is False:
+                overall_bitrate_optimal += target_bitrate
+
+                print('          ',encoding_profile.width,'x',encoding_profile.height,'                       ',target_bitrate*1e-3,'kbps                          linear',' / nbr part:',number_of_parts,'      ')
+
+
+
+
+    def process(self, number_of_parts, width, height, crf_value, idr_interval, model):
+
+        #première étape je commence par analyser le fichier d'origine
+        input_probe = Probe(self.input_file_path) #appel nécessaire à la classe Probe, création d'un objet de type probe
+        input_probe.execute()#application de la méthode execute de la classe probe
+
+        crf_bitrate_list = [] #création d'une liste
+        part_duration = input_probe.duration/number_of_parts #définition des varibles durée d'une partie à partir du probe
+        idr_interval_frames =  idr_interval*input_probe.framerate #rcl: An IDR frame is a special type of I-frame in H.264. An IDR frame specifies that no frame after the IDR frame can reference any frame before it. This makes seeking the H.264 file easier and more responsive in the player.
+        #comme j'ai une idr toutes les deux secondes alors connaissant le framerate je peux en déduire le nombre d'images entre deux idr
+
+
+        for i in range(0,number_of_parts): #la on commence les choses sérieuses
+            part_start_time = i*part_duration #on sélectionne le début des extraits à encoder
+
             crf_encode = CrfEncode(self.input_file_path, width, height, crf_value, idr_interval_frames, part_start_time, part_duration)
-            crf_encode.execute()
+            crf_encode.execute() #pour chaque extrait on créé une instance de la classe crfencode et on appelle la methode execute()
 
-            # Get the Bitrate from the CRF encoded file
             crf_probe = Probe(crf_encode.output_file_path)
-            crf_probe.execute()
+            crf_probe.execute() #pour chaque extrait on fait un probe du fichier de sortie de l'encodage, on récupère les valeur grace à la methode execute du probe
 
-            # Remove temporary CRF encoded file
-            os.remove(crf_encode.output_file_path)
+            os.remove(crf_encode.output_file_path) # on supprime le fichier
 
-            # Set the crf bitrate
-            crf_bitrate_list.append(crf_probe.bitrate)
+            crf_bitrate_list.append(crf_probe.bitrate) #on ajoute dans la liste qu'on avait créé le bitrate trouvé grace au probe de l'output
 
-        # Calculate the average bitrate for all CRF encodings
+
         self.average_bitrate = statistics.mean(crf_bitrate_list)
         self.peak_bitrate = max(crf_bitrate_list)
 
         if number_of_parts > 1:
-            # Calculate the the standard deviation of crf bitrate values
             self.standard_deviation = statistics.stdev(crf_bitrate_list)
 
             weight = 1
@@ -273,72 +177,21 @@ class CrfAnalyzer(Analyzer):
             self.optimal_bitrate = weighted_bitrate_sum/weighted_bitrate_len
 
         else:
-            # Set the optimal bitrate from the average of all crf encoded parts
             self.optimal_bitrate = self.average_bitrate
 
-        # Adding results to json
-        result = {}
-        result['processing_date'] = str(datetime.datetime.now())
-        result['parameters'] = {}
-        result['parameters']['method'] = "CRF"
-        result['parameters']['width'] = width
-        result['parameters']['height'] = height
-        result['parameters']['crf_value'] = crf_value
-        result['parameters']['idr_interval'] = idr_interval
-        result['parameters']['number_of_parts'] = number_of_parts
-        result['parameters']['part_duration'] = part_duration
-        result['bitrate'] = {}
-        result['bitrate']['optimal'] = self.optimal_bitrate
-        result['bitrate']['average'] = self.average_bitrate
-        result['bitrate']['peak'] = self.average_bitrate
-        result['bitrate']['standard_deviation'] = self.standard_deviation
-        result['optimized_encoding_ladder'] = {}
-        result['optimized_encoding_ladder']['encoding_profiles'] = []
+        if not model:
+            print('        ',width,'x',height,'                ',self.optimal_bitrate*1e-3,'kbps                       encode_for_each','/ nbr part:',number_of_parts,'      ')
 
-        overall_bitrate_optimal = 0
-        for encoding_profile in self.encoding_ladder.encoding_profile_list:
+        if model:
+            self.set_bitrate(number_of_parts)
 
-            target_bitrate = int(self.optimal_bitrate/encoding_profile.bitrate_factor)
 
-            remove_profile = False
-            if target_bitrate < encoding_profile.bitrate_min and encoding_profile.required is False:
-                remove_profile = True
-
-            if target_bitrate < encoding_profile.bitrate_min:
-                target_bitrate = encoding_profile.bitrate_min
-
-            if target_bitrate > encoding_profile.bitrate_max:
-                target_bitrate = encoding_profile.bitrate_max
-
-            if remove_profile is False:
-                overall_bitrate_optimal += target_bitrate
-                profile = {}
-                profile['width'] = encoding_profile.width
-                profile['height'] = encoding_profile.height
-                profile['bitrate'] = target_bitrate
-                profile['bitrate_savings'] = encoding_profile.bitrate_default - target_bitrate
-                result['optimized_encoding_ladder']['encoding_profiles'].append(profile)
-
-        result['optimized_encoding_ladder']['overall_bitrate_ladder'] = overall_bitrate_optimal
-        result['optimized_encoding_ladder']['overall_bitrate_savings'] = self.encoding_ladder.get_overall_bitrate() - overall_bitrate_optimal
-        self.json['analyses'].append(result)
-
+#class_5_en fonction de la métrique choisie
 
 class MetricAnalyzer(Analyzer):
-    """This class defines a Per-Title Analyzer based on VQ Metric and Multiple bitrate encodes"""
 
-    def process(self, metric, bitrate_steps, idr_interval):
-        """Do the necessary encodings and quality metric assessments
+    def process(self, metric, limit_metric, bitrate_steps_by_default, idr_interval, steps_individual_bitrate_required):
 
-        :param metric: Supporting "ssim" or "psnr"
-        :type metric: string
-        :param bitrate_steps: Bitrate gap between every encoding
-        :type bitrate_steps: int
-        :param idr_interval: IDR interval in seconds
-        :type idr_interval: int
-        """
-
-        # Start by probing the input video file
         input_probe = Probe(self.input_file_path)
         input_probe.execute()
 
@@ -347,20 +200,18 @@ class MetricAnalyzer(Analyzer):
         idr_interval_frames =  idr_interval*input_probe.framerate
         metric = str(metric).strip().lower()
 
-        # Adding results to json
-        json_ouput = {}
-        json_ouput['processing_date'] = str(datetime.datetime.now())
-        json_ouput['parameters'] = {}
-        json_ouput['parameters']['method'] = "Metric"
-        json_ouput['parameters']['metric'] = metric
-        json_ouput['parameters']['bitrate_steps'] = bitrate_steps
-        json_ouput['parameters']['idr_interval'] = idr_interval
-        json_ouput['parameters']['number_of_parts'] = 1
-        json_ouput['parameters']['part_duration'] = part_duration
-        json_ouput['optimized_encoding_ladder'] = {}
-        json_ouput['optimized_encoding_ladder']['encoding_profiles'] = []
+        #création listes bitrate pour graph 2
+        optimal_bitrate_array = []
+        default_bitrate_array = []
+
+        print('\n********************************\n********Encoding Started********\n********************************\n')
+        print('File Selected: ', os.path.basename(self.input_file_path))
+
+#pour tous les profils on a le process
 
         for encoding_profile in self.encoding_ladder.encoding_profile_list:
+
+            default_bitrate_array.append(encoding_profile.bitrate_default)
 
             profile = {}
             profile['width'] = encoding_profile.width
@@ -368,18 +219,30 @@ class MetricAnalyzer(Analyzer):
             profile['cbr_encodings'] = []
             profile['optimal_bitrate'] = None
 
+            if steps_individual_bitrate_required:
+                bitrate_steps_by_default = encoding_profile.bitrate_steps_by_default
+            print('\n\n                      __________________________________________')
+            print('                          The bitrate_step is: ',bitrate_steps_by_default*10**(-3),'kbps')
+
+            print('\n |||',encoding_profile.width, 'x', encoding_profile.height,'|||\n')
             last_metric_value = 0
             last_quality_step_ratio = 0
+            bitrate_array = []
+            quality_array = []
 
-            for bitrate in range(encoding_profile.bitrate_min, (encoding_profile.bitrate_max + bitrate_steps), bitrate_steps):
 
+#pour chaque profile on a calcul de la qualité sur le range bitrare
+
+            for bitrate in range(encoding_profile.bitrate_min, (encoding_profile.bitrate_max + bitrate_steps_by_default), bitrate_steps_by_default):
                 # Do a CRF encode for the input file
                 cbr_encode = CbrEncode(self.input_file_path, encoding_profile.width, encoding_profile.height, bitrate, idr_interval_frames, part_start_time, part_duration)
                 cbr_encode.execute()
+                print('cbr_encode -> in progress -> ->')
 
                 # Get the Bitrate from the CRF encoded file
                 metric_assessment = Metric(metric, cbr_encode.output_file_path, self.input_file_path, input_probe.width, input_probe.height)
                 metric_assessment.execute()
+                print('-> ->  probe       |>', bitrate*10**(-3),'kbps  |>',metric,' = ',metric_assessment.output_value, '\n')
 
                 # Remove temporary CRF encoded file
                 os.remove(cbr_encode.output_file_path)
@@ -390,7 +253,7 @@ class MetricAnalyzer(Analyzer):
                     profile['optimal_bitrate'] = bitrate
                     quality_step_ratio = (metric_assessment.output_value)/bitrate # frist step from null to the starting bitrate
                 else:
-                    quality_step_ratio = (metric_assessment.output_value - last_metric_value)/bitrate_steps
+                    quality_step_ratio = (metric_assessment.output_value - last_metric_value)/bitrate_steps_by_default
 
                 if quality_step_ratio >= (last_quality_step_ratio/2):
                     profile['optimal_bitrate'] = bitrate
@@ -407,11 +270,124 @@ class MetricAnalyzer(Analyzer):
 
                 encoding = {}
                 encoding['bitrate'] = bitrate
+                bitrate_array.append(bitrate) #pour un profile on a trous les bitrate
+                #print(bitrate_array)
+                quality_array.append(metric_assessment.output_value) #pour un profile on a toutes les qualités
+                #print(quality_array)
                 encoding['metric_value'] = metric_assessment.output_value
                 encoding['quality_step_ratio'] = quality_step_ratio
                 profile['cbr_encodings'].append(encoding)
 
-            profile['bitrate_savings'] = encoding_profile.bitrate_default - profile['optimal_bitrate']
-            json_ouput['optimized_encoding_ladder']['encoding_profiles'].append(profile)
 
-        self.json['analyses'].append(json_ouput)
+            profile['bitrate_savings'] = encoding_profile.bitrate_default - profile['optimal_bitrate']
+
+            #**************graph matplotlib*************
+            #initialisation
+            diff_quality_array=0 #ordonnées
+            diff_bitrate_array=1 #abscisses
+            taux_accroissement=1
+
+            #création de la courbe
+            figure(1)
+            plot(bitrate_array, quality_array, label=str(encoding_profile.width)+'x'+str(encoding_profile.height))
+            xlabel('bitrate (bps)')
+            ylabel("quality: "+str(metric).upper())
+            title(os.path.basename(self.input_file_path))
+
+            #calcul du taux d'accroissement et recherche du point idéal
+            for j in range(0, len(quality_array)-1):
+                diff_quality_array=quality_array[j+1]-quality_array[j]
+                diff_bitrate_array=bitrate_array[j+1]-bitrate_array[j]
+
+                #limited_evolution_metric=0.005 #à régler, autour 0.1 pour psnr avec 100000 en bitrate step et 0.05 avec 50000 en bitrate step et 0.005 pour ssim
+                limited_evolution_metric=limit_metric
+
+                taux_accroissement = diff_quality_array/diff_bitrate_array
+                if taux_accroissement <= limited_evolution_metric/bitrate_steps_by_default:
+                    #scatter(bitrate_array[j], quality_array[j],s=4) #j'ai trouvé le point
+                    break
+
+            #traitement des valeurs trouvées
+            print ('\nI found the best values for ||--- ', str(encoding_profile.width)+'x'+str(encoding_profile.height),' ---|| >> ',metric,':',quality_array[j],'| bitrate = ',bitrate_array[j]*10**(-3),'kbps')
+            optimal_bitrate_array.append(bitrate_array[j])
+
+
+            #mise en forme graph for each profile
+            annotation=str(bitrate_array[j]*1e-3)+' kbps'
+            #plot([bitrate_array[j],bitrate_array[j]], [0, quality_array[j]], linestyle='--' )
+            annotate(annotation, xy=(bitrate_array[j], quality_array[j]), xycoords='data', xytext=(+1, +20), textcoords='offset points', fontsize=8, arrowprops=dict(arrowstyle="->", connectionstyle="arc,rad=0.2"))
+            #plot([0, bitrate_array[j]], [quality_array[j], quality_array[j]], linestyle='--' )
+            scatter(bitrate_array[j], quality_array[j], s=7)
+            grid()
+            legend()
+            draw()
+            show(block=False)
+            pause(0.001)
+
+
+        #save graph1 and plot graph2
+        name=str(os.path.basename(self.input_file_path))
+        input("\n\n\nPress [enter] to continue, This will close the graphic and save the figure as ''file_name_metric_limit_metric.png'' !")
+        newpath = '/home/labo/Documents/per_title_analysis/results/%s' % (name)
+        if not os.path.exists(newpath):
+            os.makedirs(newpath)
+        plt.savefig(newpath+"/%s-%s-%s-Per_Title.png" % (name, str(metric).strip().upper(), str(limited_evolution_metric)))
+
+        #print(optimal_bitrate_array)
+        #print(default_bitrate_array)
+        bitrate_data = [list(i) for i in zip(optimal_bitrate_array, default_bitrate_array)]
+        #print(bitrate_data)
+
+
+        #graph2 computation*******************
+
+        figure(2)
+        columns = ('Dynamic (kbps)', 'Fix (kbps)')
+        rows = ['%s' % resolution for resolution in ('1920 x 1080', '1280 x 720', '960 x 540', '640 x 360', '480 x 270')]
+
+        ylabel("bitrate (bps)")
+        title(os.path.basename(self.input_file_path))
+
+        # Get some pastel shades for the colors
+        colors = plt.cm.YlOrBr(np.linspace(0.35, 0.8, len(rows)))
+        #size and positions
+        n_rows = len(bitrate_data)-1
+        index = np.arange(len(columns)) + 0.3
+        bar_width = 0.5
+
+        # Initialize the vertical-offset for the stacked bar chart.
+        y_offset = np.zeros(len(columns))
+
+        # Plot bars and create text labels for the table
+        cell_text = []
+        for row in range(n_rows+1): #ca s'arrette à n-1
+            plt.bar(index, bitrate_data[n_rows-row], bar_width, bottom=y_offset, color=colors[row])
+            y_offset = y_offset + bitrate_data[n_rows-row]
+            #print('this is y_offset',y_offset)
+            cell_text.append(['%1.1f' % (x / 1000.0) for x in bitrate_data[n_rows-row]])
+        # Reverse colors and text labels to display the last value at the top.
+        colors = colors[::-1]
+        cell_text.reverse()
+
+
+        # Add a table at the bottom of the axes
+        the_table = plt.table(cellText=cell_text,
+                              rowLabels=rows,
+                              rowColours=colors,
+                              colLabels=columns,
+                              loc='bottom')
+
+        # Adjust layout to make room for the table:
+        plt.subplots_adjust(left=0.5, bottom=0.2)
+
+        #plt.ylabel("Loss in ${0}'s".format(value_increment))
+        #plt.yticks(values * value_increment, ['%d' % val for val in values])
+        plt.xticks([])
+        #plt.title('Loss by Disaster')
+
+        show(block=False)
+        pause(0.001)
+        print('\n\n->->\nloading graphic Histogram\n->->\n\n')
+        input("Press [enter] to continue, This will close the graphic and save the figure as ''file_name_metric_limit_metric.png'' ")
+        plt.savefig(newpath+"/%s-%s-%s-Per_Title_Histogram.png" % (name, str(metric).strip().upper(), str(limited_evolution_metric)))
+        print('\n\n\n************ALL DONE********** !\n\n')
