@@ -1,6 +1,8 @@
 # Per-Title Analysis
 *This a python package providing tools for optimizing your over-the-top (OTT) bitrate ladder per each video you need to encode.*
 
+![Screenshot](my_movie.mxf-PSNR-0.09-Per_Title.png) ![Screenshot](my_movie.mxf-PSNR-0.09-Per_Title_Histogram.png)
+
 
 ## How does it work?
 You can configure a template encoding ladder with constraints (min/max bitrate) that will be respected for the output optimal ladder and comparing it with the default bitrate.
@@ -41,10 +43,10 @@ Each encoding profile is defined by those attributes:
 | 480 | 270 | 750000 | 200000 | 2000000 | False | 100000 |
 | 480 | 270 | 300000 | 150000 | 2000000 | True | 100000 |
 ##### How configure it ?
-You can now play with this values.
-For example set the bitrate_default with your actual bitrate.
-Then set the Min and Max considering your network constraints or storage capacity
-If you need to keep one profile whatever happens set required to True.
+- You can now play with this values.
+- For example set the bitrate_default with your actual bitrate.
+- Then set the Min and Max considering your network constraints or storage capacity
+- If you need to keep one profile whatever happens set required to True.
 
 
 #### In depth:
@@ -58,8 +60,8 @@ ___
 ##  Installation:
 This is package requires at least Python 3.4
 
-You need to have ffmpeg and ffprobe installed on the host running the script.
-You need to have matplotlib and pylab to create the graphs
+- You need to have ffmpeg and ffprobe installed on the host running the script.
+- You need to have matplotlib and pylab to create the graphs
 
 
 ## Example:
@@ -104,11 +106,6 @@ ANALYSIS = pta.CrfAnalyzer("{{ your_input_file_path }}", LADDER)
 # Launch various analysis
 ANALYSIS.process(1, 1920, 1080, 23, 2)
 ANALYSIS.process(10, 1920, 1080, 23, 2)
-
-# Print results Graph
-
-![Screenshot](my_movie.mxf-PSNR-0.09-Per_Title.png)
-![Screenshot](my_movie.mxf-PSNR-0.09-Per_Title_Histogram.png)
 
 # Print results JSON
 print(ANALYSIS.get_json())
