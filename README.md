@@ -2,8 +2,8 @@
 *This a python package providing tools for optimizing your over-the-top (OTT) bitrate ladder per each video you need to encode.*
 
 <p float="left">
-  <img src="my_movie.mxf-PSNR-0.09-Per_Title.png" width="600" />
-  <img src="my_movie.mxf-PSNR-0.09-Per_Title_Histogram.png" width="600" />
+  <img src="my_movie.mxf-PSNR-0.09-Per_Title.png" width="400" />
+  <img src="my_movie.mxf-PSNR-0.09-Per_Title_Histogram.png" width="400" />
 </p>
 
 ## How does it work?
