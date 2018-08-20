@@ -51,7 +51,7 @@ Each encoding profile is defined by those attributes:
 - If you need to keep one profile whatever happens set required to True.
 
 
-#### In depth:
+#### In depth: (SOON!)
 - How to choose the analysis parameters
 - What is the multiple part analysis
 - How is the weighted average bitrate calculated
