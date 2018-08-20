@@ -31,7 +31,7 @@ Each encoding profile is defined by those attributes:
 - __bitrate_factor__ (float): this is a private attribute calculated after initialization of the template encoding ladder
 
 ##### See this template example
-| width | height | bitrate_default | bitrate_min | bitrate_max | required |
+| width | height | bitrate_default | bitrate_min | bitrate_max | required | bitrate_steps_individual |
 | --- | --- | --- | --- | --- | --- | --- |
 | *in pixels* | *in pixels* | *in bits per second* | *in bits per second* | *in bits per second* | *bool* | *int bits per second* |
 | 1920 | 1080 | 4500000 | 1000000 | 6000000 | True | 100000 |
