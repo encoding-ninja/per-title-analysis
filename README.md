@@ -1,8 +1,10 @@
 # Per-Title Analysis
 *This a python package providing tools for optimizing your over-the-top (OTT) bitrate ladder per each video you need to encode.*
 
-![Screenshot](my_movie.mxf-PSNR-0.09-Per_Title.png) ![Screenshot](my_movie.mxf-PSNR-0.09-Per_Title_Histogram.png)
-
+<p float="left">
+  <img src="my_movie.mxf-PSNR-0.09-Per_Title.png" width="50" />
+  <img src="my_movie.mxf-PSNR-0.09-Per_Title_Histogram.png" width="50" />
+</p>
 
 ## How does it work?
 You can configure a template encoding ladder with constraints (min/max bitrate) that will be respected for the output optimal ladder and comparing it with the default bitrate.
