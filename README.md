@@ -89,6 +89,8 @@ example : python3 metric_analyzer.py /home/xxxx/Documents/pertitleanalysis/Sourc
 #we advise you to use for PSNR a limit of 0.09 (with bitrate_step = 100 kbps) and for SSIM a limit of 0.005 (with bitrate_step = 50 kbps)
 ```
 
+The JSON file and the Graphics are saved in your current working directory as /results/[my_movie.mxf]/ .json .png .png
+
 ##### JSON ouput:
 ```json
 {
