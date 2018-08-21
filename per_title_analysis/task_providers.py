@@ -73,12 +73,16 @@ class Probe(Task):
             for stream in data['streams']:
                 if stream['codec_type'] == 'video':
                     self.width = int(stream['width'])
+                    #print('the probe',self.width)
                     self.height = int(stream['height'])
-                    self.bitrate = int(stream['bit_rate'])
                     self.duration = float(stream['duration'])
                     self.video_codec = stream['codec_name']
-                    self.framerate = int(stream['r_frame_rate'].replace('/1',''))
+                    self.framerate = int(stream['r_frame_rate'].replace('/1','')) #c'est quoi ce replace
+                    self.bitrate = float(stream['bit_rate'])  #error
+                    self.video_codec = stream['codec_name']
+                    self.framerate = int(stream['r_frame_rate'].replace('/1','')) #c'est quoi ce replace
         except:
+
              # TODO: error management
              pass
 
@@ -115,13 +119,13 @@ class CrfEncode(Task):
         # Generate a temporary file name for the task output
         self.output_file_path = os.path.join(os.path.dirname(self.input_file_path),
                                              os.path.splitext(os.path.basename(self.input_file_path))[0] + "_"+uuid.uuid4().hex+".mp4")
-        print(self.output_file_path)
-        print(self.part_start_time)
-        print(self.input_file_path)
-        print(self.part_duration)
-        print(self.crf_value)
-        print(self.definition)
-        print(self.idr_interval)                                 
+        # print(self.output_file_path)
+        # print(self.part_start_time)
+        # print(self.input_file_path)
+        # print(self.part_duration)
+        # print(self.crf_value)
+        # print(self.definition)
+        # print(self.idr_interval)
 
     def execute(self):
         """Using FFmpeg to CRF Encode a file or part of a file"""

@@ -1,19 +1,26 @@
 # Per-Title Analysis
-*This a python package providing tools for optimizing your over-the-top bitrate ladder per each video you need to encode.*
+*This a python package providing tools for optimizing your over-the-top (OTT) bitrate ladder per each video you need to encode.*
 
+<p float="left">
+  <img src="my_movie.mxf-PSNR-0.09-Per_Title.png" width="400" />
+  <img src="my_movie.mxf-PSNR-0.09-Per_Title_Histogram.png" width="400" />
+</p>
 
 ## How does it work?
-You can configure a template encoding ladder with constraints (min/max bitrate) that will be respected for the output optimal ladder.
+You can configure a template encoding ladder with constraints (min/max bitrate) that will be respected for the output optimal ladder and comparing it with the default bitrate.
 You also have the control over analysis parameters (based on CRF encoding or multiple bitrate encodings with video quality metric assessments).
 
 The CRF Analyzer
-This analyzer calculates an optimal bitrate for the higher profile.
-Other profiles are declined top to bottom from the initial gap between each profiles of the template ladder.
+This analyzer calculates an optimal bitrate for the higher profile for a given CRF value.
+Other profiles are declined top to bottom from the initial gap between each profiles of the template ladder (only if you use linear model).
+Otherwise every optimal bitrates are calculated for each profil in "for_each" model.
 
 The Metric Analyzer
 This analyzer encodes multiple bitrates for each profile in the template ladder (from min to max, respecting a bitrate step defined by the user)
-It then calculates video quality metrics for each of these encodings (only ssim or psnr for now).
+It then calculates video quality metrics for each of these encodings (only SSIM or PSNR for now).
 The final optimized ladder will be constructed choosing for the best quality/bitrate ratio (similar to Netflix).
+You can then use a super graph to analyze your results !
+
 
 ### The template encoding ladder
 It is composed of multiple encoding profile object.
@@ -24,21 +31,27 @@ Each encoding profile is defined by those attributes:
 - __bitrate_min__ (int): This is the minimal bitrate you set for this profile in the output optimized encoding ladder
 - __bitrate_max__ (int): This is the maximal bitrate you set for this profile in the output optimized encoding ladder
 - __required__ (bool): Indicates if you authorize the script to remove this profile if considered not useful after optimization (conditions for this to happen are explained after)
-- __bitrate_factor__ (float): this is a private attribute calculated after initialization of the template encoding ladder 
+- __bitrate_steps_individual__ (int): This is the bitrate step used for metric_analyzer only if you want to configure one step for each profile
+- __bitrate_factor__ (float): this is a private attribute calculated after initialization of the template encoding ladder
 
 ##### See this template example
-| width | height | bitrate_default | bitrate_min | bitrate_max | required |
-| --- | --- | --- | --- | --- | --- |
-| *in pixels* | *in pixels* | *in bits per second* | *in bits per second* | *in bits per second* | *bool* |
-| 1920 | 1080 | 4500000 | 2000000 | 6000000 | True |
-| 1280 | 720 | 3400000 | 1300000 | 4500000 | True |
-| 960 | 540 | 2100000 | 700000 | 3000000 | True |
-| 640 | 360 | 1100000 | 300000 | 2000000 | True |
-| 480 | 270 | 750000 | 300000 | 900000 | False |
-| 480 | 270 | 300000 | 150000 | 500000 | True |
-##### What does it imply? *(soon)*
+| width | height | bitrate_default | bitrate_min | bitrate_max | required | bitrate_steps_individual |
+| --- | --- | --- | --- | --- | --- | --- |
+| *in pixels* | *in pixels* | *in bits per second* | *in bits per second* | *in bits per second* | *bool* | *int bits per second* |
+| 1920 | 1080 | 4500000 | 1000000 | 6000000 | True | 100000 |
+| 1280 | 720 | 3400000 | 800000 | 5000000 | True | 100000 |
+| 960 | 540 | 2100000 | 600000 | 4000000 | True | 100000 |
+| 640 | 360 | 1100000 | 300000 | 3000000 | True | 100000 |
+| 480 | 270 | 750000 | 200000 | 2000000 | False | 100000 |
+| 480 | 270 | 300000 | 150000 | 2000000 | True | 100000 |
+##### How configure it ?
+- You can now play with this values.
+- For example set the bitrate_default with your actual bitrate.
+- Then set the Min and Max considering your network constraints or storage capacity
+- If you need to keep one profile whatever happens set required to True.
 
-#### In depth: *(soon)*
+
+#### In depth: (SOON!)
 - How to choose the analysis parameters
 - What is the multiple part analysis
 - How is the weighted average bitrate calculated
@@ -47,39 +60,36 @@ Each encoding profile is defined by those attributes:
 ___
 
 ##  Installation:
-This is package requires at least Python 3.4.
+This is package requires at least Python 3.4
 
-You need to have ffmpeg and ffprobe installed on the host running the script.
+- You need to have ffmpeg and ffprobe installed on the host running the script.
+- You need to have matplotlib and pylab to create the graphs
 
 
 ## Example:
-This is an example using the CRF Analyzer method.
+Two examples using the CRF Analyzer method and the Metric Analyzer one are included in the per_title_analysis folder.
 
-##### Code:
-```python
-# -*- coding: utf8 -*-
+You can now use these scripts with the following command:
 
-from pertitleanalysis import per_title_analysis as pta
+### command for CrfAnalyzer:
+```bash
+python3 crf_analyzer.py [path/my_movie.mxf] [CRF_value] [number_of_parts] [model]
+example : python3 crf_analyzer.py /home/xxxx/Documents/pertitleanalysis/Sources/my_movie.mxf 23 1 1
 
-# create your template encoding ladder
-PROFILE_LIST = []
-PROFILE_LIST.append(pta.EncodingProfile(1920, 1080, 4500000, 2000000, 6000000, True))
-PROFILE_LIST.append(pta.EncodingProfile(1280, 720, 3400000, 1300000, 4500000, True))
-PROFILE_LIST.append(pta.EncodingProfile(960, 540, 2100000, 700000, 300000, True))
-PROFILE_LIST.append(pta.EncodingProfile(640, 360, 1100000, 300000, 2000000, True))
-PROFILE_LIST.append(pta.EncodingProfile(480, 270, 750000, 300000, 900000, False))
-PROFILE_LIST.append(pta.EncodingProfile(480, 270, 300000, 150000, 500000, True))
-LADDER = pta.EncodingLadder(PROFILE_LIST)
-
-# Create a new CRF analysis provider 
-ANALYSIS = pta.CrfAnalyzer("{{ your_input_file_path }}", LADDER)
-# Launch various analysis
-ANALYSIS.process(1, 1920, 1080, 23, 2)
-ANALYSIS.process(10, 1920, 1080, 23, 2)
-
-# Print results
-print(ANALYSIS.get_json())
+#model: 1 (linear mode, only one profile is encoded, the higher) or 0 (for_each mode, each profile is encoded)
 ```
+
+### command for MetricAnalyzer:
+```bash
+python3 metric_analyzer.py [path/my_movie.mxf] [metric] [limit_metric_value]
+example : python3 metric_analyzer.py /home/xxxx/Documents/pertitleanalysis/Sources/my_movie.mxf psnr 0.095
+
+#metric: psnr or ssim
+#limit_metric_value: To find the optimal bitrate we need to fix a limit of quality/bitrate_step ratio.
+#we advise you to use for PSNR a limit of 0.09 (with bitrate_step = 100 kbps) and for SSIM a limit of 0.005 (with bitrate_step = 50 kbps)
+```
+
+The JSON file and the Graphics are saved in your current working directory as /results/[my_movie.mxf]/ .json .png .png
 
 ##### JSON ouput:
 ```json
