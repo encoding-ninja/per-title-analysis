@@ -70,47 +70,23 @@ This is package requires at least Python 3.4
 Two examples using the CRF Analyzer method and the Metric Analyzer one are included in the per_title_analysis folder.
 
 You can now use these scripts with the following command:
-```bash
-#command for CrfAnalyzer:
 
+### command for CrfAnalyzer:
+```bash
 python3 crf_analyzer.py [path/my_movie.mxf] [CRF_value] [number_of_parts] [model]
-#model: 1 (linear mode, only one profile is encoded, the higher) or 0 (for_each mode, each profile is encoded)
 example : python3 crf_analyzer.py /home/xxxx/Documents/pertitleanalysis/Sources/my_movie.mxf 23 1 1
 
-#command for MetricAnalyzer:
+#model: 1 (linear mode, only one profile is encoded, the higher) or 0 (for_each mode, each profile is encoded)
+```
 
+### command for MetricAnalyzer:
+```bash
 python3 metric_analyzer.py [path/my_movie.mxf] [metric] [limit_metric_value]
+example : python3 metric_analyzer.py /home/xxxx/Documents/pertitleanalysis/Sources/my_movie.mxf psnr 0.095
+
 #metric: psnr or ssim
 #limit_metric_value: To find the optimal bitrate we need to fix a limit of quality/bitrate_step ratio.
 #we advise you to use for PSNR a limit of 0.09 (with bitrate_step = 100 kbps) and for SSIM a limit of 0.005 (with bitrate_step = 50 kbps)
-example : python3 metric_analyzer.py /home/xxxx/Documents/pertitleanalysis/Sources/my_movie.mxf psnr 0.095
-
-
-
-##### Code: A simple example for CRF Analysis
-```python
-# -*- coding: utf8 -*-
-
-from pertitleanalysis import per_title_analysis as pta
-
-# create your template encoding ladder
-PROFILE_LIST = []
-PROFILE_LIST.append(pta.EncodingProfile(1920, 1080, 4500000, 2000000, 6000000, True))
-PROFILE_LIST.append(pta.EncodingProfile(1280, 720, 3400000, 1300000, 4500000, True))
-PROFILE_LIST.append(pta.EncodingProfile(960, 540, 2100000, 700000, 300000, True))
-PROFILE_LIST.append(pta.EncodingProfile(640, 360, 1100000, 300000, 2000000, True))
-PROFILE_LIST.append(pta.EncodingProfile(480, 270, 750000, 300000, 900000, False))
-PROFILE_LIST.append(pta.EncodingProfile(480, 270, 300000, 150000, 500000, True))
-LADDER = pta.EncodingLadder(PROFILE_LIST)
-
-# Create a new CRF analysis provider
-ANALYSIS = pta.CrfAnalyzer("{{ your_input_file_path }}", LADDER)
-# Launch various analysis
-ANALYSIS.process(1, 1920, 1080, 23, 2)
-ANALYSIS.process(10, 1920, 1080, 23, 2)
-
-# Print results JSON
-print(ANALYSIS.get_json())
 ```
 
 ##### JSON ouput:
